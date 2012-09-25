@@ -1,0 +1,18 @@
+<package>
+  <description brief="laser_to_wall">
+
+     laser_to_wall
+
+  </description>
+  <author>Swarmlab</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/laser_to_wall</url>
+  <depend package="rospy"/>
+  <depend package="sensor_msgs"/>
+
+
+
+</package>
+
+
