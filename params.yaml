@@ -1,8 +1,0 @@
-background_b: 255
-background_g: 150
-background_r: 150
-rosdistro: fuerte
-roslaunch:
-  uris: {host_joren_laptop__36585: 'http://joren-laptop:36585/'}
-rosversion: 1.8.10
-run_id: f1a4ec5a-fcab-11e1-b460-0013e8383f4d
