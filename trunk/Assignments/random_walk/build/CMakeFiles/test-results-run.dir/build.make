@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/joren/ros/random_walk
+CMAKE_SOURCE_DIR = /home/dries/ros/random_walk
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/joren/ros/random_walk/build
+CMAKE_BINARY_DIR = /home/dries/ros/random_walk/build
 
 # Utility rule file for test-results-run.
 
@@ -57,6 +57,6 @@ CMakeFiles/test-results-run.dir/clean:
 .PHONY : CMakeFiles/test-results-run.dir/clean
 
 CMakeFiles/test-results-run.dir/depend:
-	cd /home/joren/ros/random_walk/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/joren/ros/random_walk /home/joren/ros/random_walk /home/joren/ros/random_walk/build /home/joren/ros/random_walk/build /home/joren/ros/random_walk/build/CMakeFiles/test-results-run.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/dries/ros/random_walk/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/dries/ros/random_walk /home/dries/ros/random_walk /home/dries/ros/random_walk/build /home/dries/ros/random_walk/build /home/dries/ros/random_walk/build/CMakeFiles/test-results-run.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/test-results-run.dir/depend
 

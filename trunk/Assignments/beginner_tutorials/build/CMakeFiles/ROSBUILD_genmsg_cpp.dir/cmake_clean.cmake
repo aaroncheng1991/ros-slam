@@ -1,5 +1,12 @@
 FILE(REMOVE_RECURSE
+  "../src/beginner_tutorials/msg"
+  "../src/beginner_tutorials/srv"
+  "../msg_gen"
+  "../srv_gen"
+  "../msg_gen"
+  "../srv_gen"
   "CMakeFiles/ROSBUILD_genmsg_cpp"
+  "../msg_gen/cpp/include/beginner_tutorials/Num.h"
 )
 
 # Per-language clean rules from dependency scanning.

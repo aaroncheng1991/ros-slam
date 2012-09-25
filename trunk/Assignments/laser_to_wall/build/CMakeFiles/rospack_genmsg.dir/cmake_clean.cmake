@@ -1,6 +1,6 @@
 FILE(REMOVE_RECURSE
-  "../msg_gen"
   "../src/laser_to_wall/msg"
+  "../msg_gen"
   "../msg_gen"
   "CMakeFiles/rospack_genmsg"
 )

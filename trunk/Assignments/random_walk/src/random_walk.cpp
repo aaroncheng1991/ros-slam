@@ -79,19 +79,12 @@ public:
 	  /////////////////////// ANSWER CODE END ///////////////////
     }
   };
-  /* 
-   * ===  FUNCTION  ======================================================================
-   *         Name:  test
-   *  Description:  
-   * =====================================================================================
-   */
-  
 
   // Main FSM loop for ensuring that ROS messages are
   // processed in a timely manner, and also for sending
   // velocity controls to the simulated robot based on the FSM state
   void spin() {
-    ros::Rate rate(10); // Specify the FSM loop rate in Hz
+    ros::Rate rate(5); // Specify the FSM loop rate in Hz
     while (ros::ok()) { // Keep spinning loop until user presses Ctrl+C
       // TODO: Either call:
       //
@@ -125,8 +118,8 @@ public:
   // TODO: tune parameters as you see fit
   const static double MIN_SCAN_ANGLE_RAD = -20.0/180*M_PI;
   const static double MAX_SCAN_ANGLE_RAD = +20.0/180*M_PI;
-  const static float PROXIMITY_RANGE_M = 0.70; // Should be smaller than sensor_msgs::LaserScan::range_max
-  const static double FORWARD_SPEED_MPS = 0.60;
+  const static float PROXIMITY_RANGE_M = 0.75; // Should be smaller than sensor_msgs::LaserScan::range_max
+  const static double FORWARD_SPEED_MPS = 0.6;
   const static double ROTATE_SPEED_RADPS = M_PI/2;
 
 

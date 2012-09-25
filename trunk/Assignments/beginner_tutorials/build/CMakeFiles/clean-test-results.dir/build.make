@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/joren/ros/beginner_tutorials
+CMAKE_SOURCE_DIR = /home/dries/ros/beginner_tutorials
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/joren/ros/beginner_tutorials/build
+CMAKE_BINARY_DIR = /home/dries/ros/beginner_tutorials/build
 
 # Utility rule file for clean-test-results.
 
@@ -43,7 +43,7 @@ CMAKE_BINARY_DIR = /home/joren/ros/beginner_tutorials/build
 include CMakeFiles/clean-test-results.dir/progress.make
 
 CMakeFiles/clean-test-results:
-	if ! rm -rf /home/joren/.ros/test_results/beginner_tutorials; then echo WARNING:\ failed\ to\ remove\ test-results\ directory ; fi
+	if ! rm -rf /home/dries/.ros/test_results/beginner_tutorials; then echo WARNING:\ failed\ to\ remove\ test-results\ directory ; fi
 
 clean-test-results: CMakeFiles/clean-test-results
 clean-test-results: CMakeFiles/clean-test-results.dir/build.make
@@ -58,6 +58,6 @@ CMakeFiles/clean-test-results.dir/clean:
 .PHONY : CMakeFiles/clean-test-results.dir/clean
 
 CMakeFiles/clean-test-results.dir/depend:
-	cd /home/joren/ros/beginner_tutorials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/joren/ros/beginner_tutorials /home/joren/ros/beginner_tutorials /home/joren/ros/beginner_tutorials/build /home/joren/ros/beginner_tutorials/build /home/joren/ros/beginner_tutorials/build/CMakeFiles/clean-test-results.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/dries/ros/beginner_tutorials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/dries/ros/beginner_tutorials /home/dries/ros/beginner_tutorials /home/dries/ros/beginner_tutorials/build /home/dries/ros/beginner_tutorials/build /home/dries/ros/beginner_tutorials/build/CMakeFiles/clean-test-results.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/clean-test-results.dir/depend
 
