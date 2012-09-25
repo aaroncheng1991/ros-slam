@@ -32,10 +32,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/joren/ros/beginner_tutorials
+CMAKE_SOURCE_DIR = /home/dries/ros/beginner_tutorials
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/joren/ros/beginner_tutorials/build
+CMAKE_BINARY_DIR = /home/dries/ros/beginner_tutorials/build
 
 # Utility rule file for test.
 
@@ -57,6 +57,6 @@ CMakeFiles/test.dir/clean:
 .PHONY : CMakeFiles/test.dir/clean
 
 CMakeFiles/test.dir/depend:
-	cd /home/joren/ros/beginner_tutorials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/joren/ros/beginner_tutorials /home/joren/ros/beginner_tutorials /home/joren/ros/beginner_tutorials/build /home/joren/ros/beginner_tutorials/build /home/joren/ros/beginner_tutorials/build/CMakeFiles/test.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/dries/ros/beginner_tutorials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/dries/ros/beginner_tutorials /home/dries/ros/beginner_tutorials /home/dries/ros/beginner_tutorials/build /home/dries/ros/beginner_tutorials/build /home/dries/ros/beginner_tutorials/build/CMakeFiles/test.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/test.dir/depend
 

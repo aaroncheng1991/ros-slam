@@ -32,19 +32,33 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/joren/ros/beginner_tutorials
+CMAKE_SOURCE_DIR = /home/dries/ros/beginner_tutorials
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/joren/ros/beginner_tutorials/build
+CMAKE_BINARY_DIR = /home/dries/ros/beginner_tutorials/build
 
 # Utility rule file for ROSBUILD_gensrv_cpp.
 
 # Include the progress variables for this target.
 include CMakeFiles/ROSBUILD_gensrv_cpp.dir/progress.make
 
-CMakeFiles/ROSBUILD_gensrv_cpp:
+CMakeFiles/ROSBUILD_gensrv_cpp: ../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h
+
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: ../srv/AddTwoInts.srv
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: /opt/ros/fuerte/share/roscpp/rosbuild/scripts/gensrv_cpp.py
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: /opt/ros/fuerte/share/roscpp/rosbuild/scripts/genmsg_cpp.py
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: /opt/ros/fuerte/share/roslib/bin/gendeps
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: ../manifest.xml
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: /opt/ros/fuerte/share/std_msgs/manifest.xml
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: /opt/ros/fuerte/share/roslang/manifest.xml
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: /opt/ros/fuerte/share/rospy/manifest.xml
+../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h: /opt/ros/fuerte/share/roscpp/manifest.xml
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/dries/ros/beginner_tutorials/build/CMakeFiles $(CMAKE_PROGRESS_1)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h"
+	/opt/ros/fuerte/share/roscpp/rosbuild/scripts/gensrv_cpp.py /home/dries/ros/beginner_tutorials/srv/AddTwoInts.srv
 
 ROSBUILD_gensrv_cpp: CMakeFiles/ROSBUILD_gensrv_cpp
+ROSBUILD_gensrv_cpp: ../srv_gen/cpp/include/beginner_tutorials/AddTwoInts.h
 ROSBUILD_gensrv_cpp: CMakeFiles/ROSBUILD_gensrv_cpp.dir/build.make
 .PHONY : ROSBUILD_gensrv_cpp
 
@@ -57,6 +71,6 @@ CMakeFiles/ROSBUILD_gensrv_cpp.dir/clean:
 .PHONY : CMakeFiles/ROSBUILD_gensrv_cpp.dir/clean
 
 CMakeFiles/ROSBUILD_gensrv_cpp.dir/depend:
-	cd /home/joren/ros/beginner_tutorials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/joren/ros/beginner_tutorials /home/joren/ros/beginner_tutorials /home/joren/ros/beginner_tutorials/build /home/joren/ros/beginner_tutorials/build /home/joren/ros/beginner_tutorials/build/CMakeFiles/ROSBUILD_gensrv_cpp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/dries/ros/beginner_tutorials/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/dries/ros/beginner_tutorials /home/dries/ros/beginner_tutorials /home/dries/ros/beginner_tutorials/build /home/dries/ros/beginner_tutorials/build /home/dries/ros/beginner_tutorials/build/CMakeFiles/ROSBUILD_gensrv_cpp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ROSBUILD_gensrv_cpp.dir/depend
 

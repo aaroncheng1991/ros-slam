@@ -49,9 +49,6 @@ public:
 			mapDescription[i][1] = true;
 			mapDescription[i][2] = false;
 		};
-		for (int i = 0; i<20; i++){
-			printf("init tempBelief%f \n",beliefStates[i]);
-		}
 
 		mapDescription[1][0] = false;
 		mapDescription[3][1] = false;
@@ -64,7 +61,7 @@ public:
 
 
 
-/*============================================*/
+		/*============================================*/
 	}; 
 
 
@@ -149,8 +146,6 @@ public:
 	void updateMove() {
 		std::vector<double> beliefStatesNon;
 
-		
-
 		for (int i = 0; i<NUM_STATES; i++) {
 			//Calculating our temporary belief
 			double tempBelief=0.1*beliefStates[i];
@@ -160,8 +155,61 @@ public:
 					tempBelief+=0.1*beliefStates[i-2];
 				}
 			}
+			
+			beliefStatesNon.push_back(tempBelief);
+		}
+
+		double sum=0;
+		for (int i = 0; i<NUM_STATES; i++){
+			sum+=beliefStatesNon[i];
+		}
+		for (int i = 0; i<NUM_STATES; i++){
+			beliefStates[i]=beliefStatesNon[i]*(1.0/sum);
+		}
+	};				
+
+
+	/*==========================================*/
+
+
+
+
+	/*=TODO - INSERT-CHANGE CODE HERE IF NEEDED=*/
+	void updateTurn() {
+		std::vector<double> beliefStatesNon;
+
+		for (int i = 0; i<NUM_STATES; i++) {
+			//Calculating our temporary belief
+			double tempBelief=0.1*beliefStates[i];
+			tempBelief +=0.9*beliefStates[19-i];
+
+			
+			beliefStatesNon.push_back(tempBelief);
+		}
+
+		double sum=0;
+		for (int i = 0; i<NUM_STATES; i++){
+			sum+=beliefStatesNon[i];
+		}
+		for (int i = 0; i<NUM_STATES; i++){
+			beliefStates[i]=beliefStatesNon[i]*(1.0/sum);
+		}
+	};
+	/*==========================================*/
+
+
+
+	/*=TODO - INSERT-CHANGE CODE HERE IF NEEDED=*/
+	void updateSensing() {
+		// example routine, generates random beliefs
+		std::vector<double> beliefStatesNon;
+
+		for (int i = 0; i<NUM_STATES; i++) {
+			//Calculating our temporary belief
+			double tempBelief=beliefStates[i];
+
 			//Calculating belief without n.
-			double beliefNoN=0;
+			double beliefNoN=1;
 
 			if(wall_right && mapDescription[i][1]) {
 				beliefNoN=0.8;
@@ -181,6 +229,7 @@ public:
 			} else if(!wall_left && !mapDescription[i][0]) {
 				beliefNoN*=0.7;
 			}
+
 			if(wall_front && mapDescription[i][2]) {
 				beliefNoN*=0.8;
 			} else if(wall_front && !mapDescription[i][2]) {
@@ -191,7 +240,6 @@ public:
 				beliefNoN*=0.7;
 			}
 			beliefNoN*=tempBelief;
-			printf("tempBelief: %f \n",tempBelief);
 			beliefStatesNon.push_back(beliefNoN);
 		}
 
@@ -199,142 +247,117 @@ public:
 		for (int i = 0; i<NUM_STATES; i++){
 			sum+=beliefStatesNon[i];
 		}
-		printf("sum: %f \n", sum);
-		
 		for (int i = 0; i<NUM_STATES; i++){
-			printf("BeliefStatesNon %f \n", beliefStatesNon[i]);
 			beliefStates[i]=beliefStatesNon[i]*(1.0/sum);
-			printf("beliefStates %f \n",beliefStates[i]);
 		}
-	};				
-		
-		//beliefStates[i]=(double)(rand()%100)/100;
-	
-/*==========================================*/
-
-
-
-
-/*=TODO - INSERT-CHANGE CODE HERE IF NEEDED=*/
-void updateTurn() {
-
-};
-/*==========================================*/
-
-
-
-/*=TODO - INSERT-CHANGE CODE HERE IF NEEDED=*/
-void updateSensing() {
-	// example routine, generates random beliefs
-
-}
-/*==========================================*/
-
-
-// Send a velocity command 
-void move(double linearVelMPS, double angularVelRadPS) {
-	geometry_msgs::Twist msg; // The default constructor will set all commands to 0
-	msg.linear.x = linearVelMPS;
-	msg.angular.z = angularVelRadPS;
-	commandPub.publish(msg);
-}
-
-// introduce discrete movement noise
-int movementNoise()
-{
-	if (movenoise)
-	{ 
-		int val = rand()%100;
-		if (val<LOWER_NOISE_THRESHOLD) return 0;
-		if (val>=UPPER_NOISE_THRESHOLD) return 2;
 	}
-	return 1;
-}
+	/*==========================================*/
 
-// Introduce measurement noise 
-bool measurementNoise(bool measurement)
-{
-	if (measnoise)
-	{    
-		int val = rand()%100;
-		if (measurement) {
-			if (val>=80)
-				return !measurement; 
+
+	// Send a velocity command 
+	void move(double linearVelMPS, double angularVelRadPS) {
+		geometry_msgs::Twist msg; // The default constructor will set all commands to 0
+		msg.linear.x = linearVelMPS;
+		msg.angular.z = angularVelRadPS;
+		commandPub.publish(msg);
+	}
+
+	// introduce discrete movement noise
+	int movementNoise()
+	{
+		if (movenoise)
+		{ 
+			int val = rand()%100;
+			if (val<LOWER_NOISE_THRESHOLD) return 0;
+			if (val>=UPPER_NOISE_THRESHOLD) return 2;
 		}
-		else 
-			if (val>=70) 
-				return !measurement;
+		return 1;
 	}
-	return measurement;
-}
 
-// Process the incoming action message
-void commandCallbackAction(const std_msgs::Int32::ConstPtr& msg) {
-	int steps = movementNoise();
-	if (msg->data == 0) {
-		for (int i = 0; i<steps; i++) {
-			if (!obstacle) {
-				moveStartTime = ros::Time::now();
-				while (ros::Time::now() - moveStartTime <= moveDuration) 
-					move(FORWARD_SPEED_MPS,0);
+	// Introduce measurement noise 
+	bool measurementNoise(bool measurement)
+	{
+		if (measnoise)
+		{    
+			int val = rand()%100;
+			if (measurement) {
+				if (val>=80)
+					return !measurement; 
 			}
-			ros::Duration(0.2).sleep();
+			else 
+				if (val>=70) 
+					return !measurement;
 		}
-		updateMove();
+		return measurement;
 	}
-	if (msg->data == 1) {
-		for (int i = 0; i<std::min(steps,1); i++) {
-			rotateStartTime = ros::Time::now();
-			while (ros::Time::now() - rotateStartTime <= rotateDuration) 
-				move(0,ROTATE_SPEED_RADPS);
-		}
-		updateTurn();
-	}
-	if (msg->data == 2) {	
-		updateSensing();
-	}
-	if (msg->data == 3) {
-		if (movenoise==false) movenoise = true;
-		else movenoise = false;
-		ROS_INFO_STREAM("movementnoise: " << movenoise);
-	}
-	if (msg->data == 4) {
-		if (measnoise==false) measnoise = true;
-		else measnoise = false;
-		ROS_INFO_STREAM("measurementnoise: " << measnoise);
-	}
-	publishBeliefMarkers();
-}
 
-// Process the incoming wall scan message
-void commandCallbackWallScan(const laser_to_wall::WallScan::ConstPtr& msg) {
-	wall_left  =  measurementNoise((bool)msg->wall_left);
-	wall_right =  measurementNoise((bool)msg->wall_right);
-	wall_front =  measurementNoise((bool)msg->wall_front);
-	obstacle =  (bool)msg->wall_front;
-}
+	// Process the incoming action message
+	void commandCallbackAction(const std_msgs::Int32::ConstPtr& msg) {
+		int steps = movementNoise();
+		if (msg->data == 0) {
+			for (int i = 0; i<steps; i++) {
+				if (!obstacle) {
+					moveStartTime = ros::Time::now();
+					while (ros::Time::now() - moveStartTime <= moveDuration) 
+						move(FORWARD_SPEED_MPS,0);
+				}
+				ros::Duration(0.2).sleep();
+			}
+			updateMove();
+		}
+		if (msg->data == 1) {
+			for (int i = 0; i<std::min(steps,1); i++) {
+				rotateStartTime = ros::Time::now();
+				while (ros::Time::now() - rotateStartTime <= rotateDuration) 
+					move(0,ROTATE_SPEED_RADPS);
+			}
+			updateTurn();
+		}
+		if (msg->data == 2) {	
+			updateSensing();
+		}
+		if (msg->data == 3) {
+			if (movenoise==false) movenoise = true;
+			else movenoise = false;
+			ROS_INFO_STREAM("movementnoise: " << movenoise);
+		}
+		if (msg->data == 4) {
+			if (measnoise==false) measnoise = true;
+			else measnoise = false;
+			ROS_INFO_STREAM("measurementnoise: " << measnoise);
+		}
+		publishBeliefMarkers();
+	}
+
+	// Process the incoming wall scan message
+	void commandCallbackWallScan(const laser_to_wall::WallScan::ConstPtr& msg) {
+		wall_left  =  measurementNoise((bool)msg->wall_left);
+		wall_right =  measurementNoise((bool)msg->wall_right);
+		wall_front =  measurementNoise((bool)msg->wall_front);
+		obstacle =  (bool)msg->wall_front;
+	}
 
 
 protected:
-ros::Publisher commandPub; // Publisher to the simulated robot's velocity command topic
-ros::Publisher markerPub;
-ros::Subscriber wallSub; // Subscriber to the simulated robot's wall scan topic
-ros::Subscriber actionSub; // Subscriber to the action topic
-ros::Time rotateStartTime; // Start time of the rotation
-ros::Duration rotateDuration; // Duration of the rotation
-ros::Time moveStartTime; // Start time of the rotation
-ros::Duration moveDuration; // Duration of the rotation
-std::vector<double> beliefStates;
-bool wall_front, wall_left, wall_right, movenoise, measnoise, obstacle;
-const static int NUM_STATES = 20;
-const static double FORWARD_SPEED_MPS = 1.0;
-const static double ROTATE_SPEED_RADPS = M_PI/2;
-const static int UPPER_NOISE_THRESHOLD = 90;
-const static int LOWER_NOISE_THRESHOLD = 10;
-/*=TODO - INSERT-CHANGE CODE HERE IF NEEDED=*/
-//describing walls for each state, in the order: left, right, front
-bool mapDescription[20][3]; 
-/*==========================================*/
+	ros::Publisher commandPub; // Publisher to the simulated robot's velocity command topic
+	ros::Publisher markerPub;
+	ros::Subscriber wallSub; // Subscriber to the simulated robot's wall scan topic
+	ros::Subscriber actionSub; // Subscriber to the action topic
+	ros::Time rotateStartTime; // Start time of the rotation
+	ros::Duration rotateDuration; // Duration of the rotation
+	ros::Time moveStartTime; // Start time of the rotation
+	ros::Duration moveDuration; // Duration of the rotation
+	std::vector<double> beliefStates;
+	bool wall_front, wall_left, wall_right, movenoise, measnoise, obstacle;
+	const static int NUM_STATES = 20;
+	const static double FORWARD_SPEED_MPS = 1.0;
+	const static double ROTATE_SPEED_RADPS = M_PI/2;
+	const static int UPPER_NOISE_THRESHOLD = 90;
+	const static int LOWER_NOISE_THRESHOLD = 10;
+	/*=TODO - INSERT-CHANGE CODE HERE IF NEEDED=*/
+	//describing walls for each state, in the order: left, right, front
+	bool mapDescription[20][3]; 
+	/*==========================================*/
 };
 
 int main(int argc, char **argv) {

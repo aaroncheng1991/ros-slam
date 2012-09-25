@@ -6,15 +6,15 @@
 
 #IncludeRegexTransform: 
 
-/home/joren/ros/random_walk/src/random_walk.cpp
+/home/dries/ros/random_walk/src/random_walk.cpp
 ros/ros.h
-/home/joren/ros/random_walk/src/ros/ros.h
+/home/dries/ros/random_walk/src/ros/ros.h
 ros/console.h
-/home/joren/ros/random_walk/src/ros/console.h
+/home/dries/ros/random_walk/src/ros/console.h
 geometry_msgs/Twist.h
-/home/joren/ros/random_walk/src/geometry_msgs/Twist.h
+/home/dries/ros/random_walk/src/geometry_msgs/Twist.h
 sensor_msgs/LaserScan.h
-/home/joren/ros/random_walk/src/sensor_msgs/LaserScan.h
+/home/dries/ros/random_walk/src/sensor_msgs/LaserScan.h
 cstdlib
 -
 ctime
