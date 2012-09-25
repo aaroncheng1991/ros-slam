@@ -1,8 +1,0 @@
-<launch>
-  <node pkg="stage" type="stageros" name="stageros" args="$(find bayes_world)/world/swarmlab_single_turtle.world" respawn="false" output="screen" />
-  <node pkg="fake_localization" type="fake_localization" name="fake_localization" />
-  <node pkg="map_server" type="map_server" name="map_server" args="$(find bayes_world)/world/swarmlab_map.yaml" />
-  <node pkg="laser_to_wall" type="laser_to_wall.py" name="laser_to_wall" />
-  <node pkg="controller" type="controller.py" name="controller" />
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find bayes_world)/view.vcg" />
-</launch>
