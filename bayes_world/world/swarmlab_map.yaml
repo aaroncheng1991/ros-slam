@@ -1,0 +1,7 @@
+image: Basic_maze_40pxpm.png
+resolution: 0.025000
+origin: [-0.800000, -5.3000000, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+
