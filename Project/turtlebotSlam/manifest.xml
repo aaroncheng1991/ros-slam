@@ -1,0 +1,17 @@
+<package>
+  <description brief="random_walk">
+
+     random_walk
+
+  </description>
+  <author>Dries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/random_walk</url>
+  <depend package="roscpp"/>
+  <depend package="geometry_msgs"/>
+  <depend package="sensor_msgs"/>
+
+</package>
+
+
