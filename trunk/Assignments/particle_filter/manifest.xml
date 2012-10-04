@@ -1,0 +1,20 @@
+<package>
+  <description brief="particle_filter">
+
+     particle_filter
+
+  </description>
+  <author>Swarmlab</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/particle_filter</url>
+  <depend package="std_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="tf"/>
+  <depend package="occupancy_grid_utils"/>
+  <depend package="roscpp"/>
+
+</package>
+
+
