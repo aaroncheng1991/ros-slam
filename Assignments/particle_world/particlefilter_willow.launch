@@ -1,0 +1,16 @@
+<launch>
+  <param name="/use_sim_time" value="true"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find particle_world)/world/labmap.yaml" respawn="false" />
+  <node pkg="stage" type="stageros" name="stageros" args="$(find particle_world)/world/lab.world" respawn="false" >
+    <param name="base_watchdog_timeout" value="0.2"/>
+  </node>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find particle_world)/rviz_view.vcg" />
+  <node name="tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 100" />
+  
+  <!-- Don't auto-launch the stage keyboard teleoperation (better to
+       launch it manually in a separate terminal window, and don't
+       auto-launch the actual MCL node (because it will need to be
+       recompiled and restarted so often anyway) -->
+  <!-- <node pkg="pr2_teleop" type="pr2_teleop_keyboard" name="pr2_teleop_keyboard"></node> -->
+  <!-- <node pkg="probrob_mcl" name="mcllab" type="mcllab" />   -->
+</launch>

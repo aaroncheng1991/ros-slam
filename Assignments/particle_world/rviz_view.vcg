@@ -1,0 +1,70 @@
+Background\ ColorB=0
+Background\ ColorG=0
+Background\ ColorR=0
+Camera\ Config=1.5648 4.68357 51.6592 -1.30587 -0.69322 -15.7633
+Camera\ Type=rviz::OrbitViewController
+Fixed\ Frame=/map
+Grid.Alpha=0.5
+Grid.Cell\ Size=1
+Grid.ColorB=0.5
+Grid.ColorG=0.5
+Grid.ColorR=0.5
+Grid.Enabled=0
+Grid.Line\ Style=0
+Grid.Line\ Width=0.03
+Grid.Normal\ Cell\ Count=0
+Grid.OffsetX=0
+Grid.OffsetY=0
+Grid.OffsetZ=0
+Grid.Plane=0
+Grid.Plane\ Cell\ Count=10
+Grid.Reference\ Frame=<Fixed Frame>
+Map.Alpha=0.7
+Map.Draw\ Behind=1
+Map.Enabled=1
+Map.Topic=/map
+Pose\ Array.Arrow\ Length=0.3
+Pose\ Array.ColorB=0
+Pose\ Array.ColorG=0.1
+Pose\ Array.ColorR=1
+Pose\ Array.Enabled=1
+Pose\ Array.Topic=/particle_cloud
+Pose.Axes\ Length=1
+Pose.Axes\ Radius=0.1
+Pose.Enabled=1
+Pose.Shape=1
+Pose.Topic=/mcl_pose
+Property\ Grid\ Splitter=356,78
+Property\ Grid\ State=expanded=.Global Options,Pose.Enabled,Pose.Shape Properties;splitterratio=0.5
+QMainWindow=000000ff00000000fd00000003000000000000011d00000204fc0200000001fb000000100044006900730070006c006100790073010000001d00000204000000ee00ffffff000000010000013000000204fc0200000003fb0000001e0054006f006f006c002000500072006f0070006500720074006900650073010000001d000000950000006700fffffffb0000000a0056006900650077007301000000b8000000ce000000bb00fffffffb0000001200530065006c0065006300740069006f006e010000018c000000950000006700ffffff00000003000005100000003efc0100000001fb0000000800540069006d0065010000000000000510000002bf00ffffff000002b70000020400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+TF.All\ Enabled=1
+TF.Enabled=0
+TF.Frame\ Timeout=15
+TF.Marker\ Scale=1
+TF.Show\ Arrows=1
+TF.Show\ Axes=1
+TF.Show\ Names=1
+TF.Update\ Interval=0.05
+Target\ Frame=<Fixed Frame>
+Tool\ 2D\ Nav\ GoalTopic=move_base_simple/goal
+Tool\ 2D\ Pose\ EstimateTopic=initialpose
+[Display0]
+ClassName=rviz::MapDisplay
+Name=Map
+[Display1]
+ClassName=rviz::TFDisplay
+Name=TF
+[Display2]
+ClassName=rviz::GridDisplay
+Name=Grid
+[Display3]
+ClassName=rviz::PoseArrayDisplay
+Name=Pose Array
+[Display4]
+ClassName=rviz::PoseDisplay
+Name=Pose
+[Window]
+Height=650
+Width=1312
+X=1186
+Y=631
