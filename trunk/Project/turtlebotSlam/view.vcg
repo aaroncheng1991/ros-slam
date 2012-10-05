@@ -1,7 +1,11 @@
+Axes.Enabled=1
+Axes.Length=1
+Axes.Radius=0.1
+Axes.Reference\ Frame=/base_link
 Background\ ColorB=0
 Background\ ColorG=0
 Background\ ColorR=0
-Camera\ Config=0.982794 1.5708 18.0278 0 -1.90735e-06 1.90735e-06
+Camera\ Config=1.41279 4.73581 20.1911 0 -1.90735e-06 1.90735e-06
 Camera\ Type=rviz::OrbitViewController
 Fixed\ Frame=/map
 Map.Alpha=0.7
@@ -9,7 +13,7 @@ Map.Draw\ Behind=0
 Map.Enabled=1
 Map.Topic=/map
 Property\ Grid\ Splitter=519,78
-Property\ Grid\ State=expanded=.Global Options,Map.Enabled;splitterratio=0.5
+Property\ Grid\ State=expanded=.Global Options,Map.Enabled,Axes.Enabled;splitterratio=0.5
 QMainWindow=000000ff00000000fd00000003000000000000011d000002a7fc0200000001fb000000100044006900730070006c006100790073010000001d000002a7000000ee00ffffff0000000100000131000002a7fc0200000003fb0000001e0054006f006f006c002000500072006f0070006500720074006900650073010000001d000000af0000006700fffffffb0000000a0056006900650077007301000000d20000013d000000bb00fffffffb0000001200530065006c0065006300740069006f006e0100000215000000af0000006700ffffff00000003000004cc0000003efc0100000001fb0000000800540069006d00650100000000000004cc000002bf00ffffff00000272000002a700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
 Target\ Frame=<Fixed Frame>
 Tool\ 2D\ Nav\ GoalTopic=/move_base_simple/goal
@@ -17,6 +21,9 @@ Tool\ 2D\ Pose\ EstimateTopic=initialpose
 [Display0]
 ClassName=rviz::MapDisplay
 Name=Map
+[Display1]
+ClassName=rviz::AxesDisplay
+Name=Axes
 [Window]
 Height=776
 Width=1228
