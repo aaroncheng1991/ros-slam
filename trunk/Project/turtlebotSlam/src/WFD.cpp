@@ -3,6 +3,7 @@
 #include "geometry_msgs/Twist.h"
 #include "sensor_msgs/LaserScan.h"
 #include "nav_msgs/OccupancyGrid.h"
+#include "tf/tfMessage.h"
 #include <cstdlib> // Needed for rand()
 #include <iostream>
 #include <ctime> // Needed to seed random number generator with a time value
@@ -25,7 +26,7 @@ public:
     // this->commandCallback() whenever a new message is published on that topic
     laserSub = nh.subscribe("base_scan", 1, &WFD::commandCallback, this);
     mapSub = nh.subscribe("map", 1, &WFD::mapCallback, this);
-    
+    tfSub = nh.subscribe("tf", 1, &WFD::tfCallback, this);    
   };
 
   // Send a velocity command 
@@ -35,6 +36,9 @@ public:
     msg.angular.z = angularVelRadPS;
     commandPub.publish(msg);
   };
+
+  void tfCallback(const tf::tfMessage::ConstPtr& msg){
+  }
 
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
       ROS_ERROR("Width %d, height %d",msg->info.width, msg->info.height);
@@ -130,6 +134,7 @@ protected:
   ros::Publisher commandPub; // Publisher to the simulated robot's velocity command topic
   ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic
   ros::Subscriber mapSub;  //Subscriber to the gmapping map topic
+  ros::Subscriber tfSub; //subscriber for the tf topic
   enum FSM fsm; // Finite state machine for the random walk algorithm
   ros::Time rotateStartTime; // Start time of the rotation
   ros::Duration rotateDuration; // Duration of the rotation
