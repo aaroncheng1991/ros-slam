@@ -4,6 +4,7 @@
 #include "sensor_msgs/LaserScan.h"
 #include "nav_msgs/OccupancyGrid.h"
 #include <cstdlib> // Needed for rand()
+#include <iostream>
 #include <ctime> // Needed to seed random number generator with a time value
 
 
@@ -35,8 +36,9 @@ public:
     commandPub.publish(msg);
   };
 
-  void mapCallback(const nav_msgs::OccupancyGrid::constptr& msg){
-	ROS_ERROR("I AM HERE");
+  void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
+      ROS_ERROR("Width %d, height %d",msg->info.width, msg->info.height);
+      ROS_ERROR("Origin x; %f, Origin y: %f",msg->info.origin.position.x, msg->info.origin.position.y);
   }
 
   // Process the incoming laser scan message
