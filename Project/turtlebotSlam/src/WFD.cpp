@@ -3,7 +3,9 @@
 #include "geometry_msgs/Twist.h"
 #include "sensor_msgs/LaserScan.h"
 #include "nav_msgs/OccupancyGrid.h"
+#include "nav_msgs/Odometry.h"
 #include "tf/tfMessage.h"
+#include "tf/transform_listener"
 #include <cstdlib> // Needed for rand()
 #include <iostream>
 #include <ctime> // Needed to seed random number generator with a time value
@@ -27,6 +29,7 @@ public:
     laserSub = nh.subscribe("base_scan", 1, &WFD::commandCallback, this);
     mapSub = nh.subscribe("map", 1, &WFD::mapCallback, this);
     tfSub = nh.subscribe("tf", 1, &WFD::tfCallback, this);    
+    odomSub = nh.subscribe("odom", 1, &WFD::odomCallback, this);
   };
 
   // Send a velocity command 
@@ -37,9 +40,13 @@ public:
     commandPub.publish(msg);
   };
 
-  void tfCallback(const tf::tfMessage::ConstPtr& msg){
+  void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
+	  ROS_ERROR("x: %f, y: %f, z:%f", msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+
   }
 
+  void tfCallback(const tf::tfMessage::ConstPtr& msg){
+  }
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
       ROS_ERROR("Width %d, height %d",msg->info.width, msg->info.height);
       ROS_ERROR("Origin x; %f, Origin y: %f",msg->info.origin.position.x, msg->info.origin.position.y);
@@ -135,6 +142,8 @@ protected:
   ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic
   ros::Subscriber mapSub;  //Subscriber to the gmapping map topic
   ros::Subscriber tfSub; //subscriber for the tf topic
+  ros::Subscriber odomSub; //subscriber for the odom topic
+  tf::TransformListener tfList;
   enum FSM fsm; // Finite state machine for the random walk algorithm
   ros::Time rotateStartTime; // Start time of the rotation
   ros::Duration rotateDuration; // Duration of the rotation
