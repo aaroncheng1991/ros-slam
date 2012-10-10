@@ -1,0 +1,115 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{default}
+\usepackage{beamerthemesplit}
+\usetheme{Berlin}
+
+
+\begin{document}
+\title{TurtlebotSLAM \\ Group 1}   
+\author{Dries De Rydt \\ Felix Remmel \\ Gijs-Jan Roelofs \\ Joren Vandelaer } 
+\date{\today} 
+
+\frame{\titlepage} 
+
+\frame{\frametitle{Table of contents}\tableofcontents} 
+
+
+\section{Introduction} 
+\frame{
+\frametitle{Introduction}
+\begin{itemize}
+ \item Phase 1: Exploration, Frontier Detection
+ \item Phase 2: Graph-based SLAM
+ \item Phase 3: Exploration and Landmark detection
+ \item Competing against other teams in the competition
+\end{itemize}
+
+}
+
+\section{Turtlebot}
+\frame{
+\frametitle{Turtlebot}
+************Insert picture here
+}
+
+\section{ROS}
+\frame{
+\frametitle{Robot Operating System (ROS)}
+}
+
+\section{Exploration Algorithms}
+\frame{ 
+\frametitle{Exploration Algorithms} 
+\begin{itemize}
+\item Random
+\item Wave Frontier Detection (WFD)
+\item Fast Frontier Detection (FFD)
+\end{itemize} 
+}
+
+\subsection{Random}
+\frame{
+\frametitle{Random}
+}
+\subsection{WFD}
+\frame{
+\frametitle{Wave Frontier Detection}
+}
+\subsection{FFD}
+\frame{
+\frametitle{Fast Frontier Detection}
+}
+
+
+\frame{\frametitle{numbered lists with pause}
+\begin{enumerate}
+\item Introduction to  \LaTeX \pause 
+\item Course 2 \pause 
+\item Termpapers and presentations with \LaTeX \pause 
+\item Beamer class
+\end{enumerate}
+}
+
+\section{Section no.3} 
+\subsection{Tables}
+\frame{\frametitle{Tables}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Date} & \textbf{Instructor} & \textbf{Title} \\
+\hline
+WS 04/05 & Sascha Frank & First steps with  \LaTeX  \\
+\hline
+SS 05 & Sascha Frank & \LaTeX \ Course serial \\
+\hline
+\end{tabular}}
+
+
+\frame{\frametitle{Tables with pause}
+\begin{tabular}{c c c}
+A & B & C \\ 
+\pause 
+1 & 2 & 3 \\  
+\pause 
+A & B & C \\ 
+\end{tabular} }
+
+
+\section{Section no. 4}
+\subsection{blocs}
+\frame{\frametitle{blocs}
+
+\begin{block}{title of the bloc}
+bloc text
+\end{block}
+
+\begin{exampleblock}{title of the bloc}
+bloc text
+\end{exampleblock}
+
+
+\begin{alertblock}{title of the bloc}
+bloc text
+\end{alertblock}
+}
+\end{document}
