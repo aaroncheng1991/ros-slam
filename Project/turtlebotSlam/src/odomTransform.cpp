@@ -15,7 +15,8 @@
  *
  * =====================================================================================
  */
-
+class odomTransform{
+public:
 int main(int argc, char** argv){
     ros::init(argc, argv, "my_tf_listener");
     ros::NodeHandle node;
@@ -71,4 +72,4 @@ int main(int argc, char** argv){
     return 0;
 }
 }
-}
+
