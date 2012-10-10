@@ -5,7 +5,7 @@
 #include "nav_msgs/OccupancyGrid.h"
 #include "nav_msgs/Odometry.h"
 #include "tf/tfMessage.h"
-#include "tf/transform_listener"
+#include "tf/transform_listener.h"
 #include <cstdlib> // Needed for rand()
 #include <iostream>
 #include <ctime> // Needed to seed random number generator with a time value
@@ -37,16 +37,25 @@ public:
     geometry_msgs::Twist msg; // The default constructor will set all commands to 0
     msg.linear.x = linearVelMPS;
     msg.angular.z = angularVelRadPS;
-    commandPub.publish(msg);
+//    commandPub.publish(msg);
   };
 
   void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
-	  ROS_ERROR("x: %f, y: %f, z:%f", msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+//	  ROS_ERROR("ODOM: x: %f, y: %f, z:%f", msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
 
   }
 
   void tfCallback(const tf::tfMessage::ConstPtr& msg){
+	  try{
+		  tfList.lookupTransform("map", "odom", ros::Time(0), tfMap);
+	  }catch(tf::TransformException &exception){
+		  ROS_ERROR("%s", exception.what());
+	  }
+	  origin = tfMap.getOrigin();
+	  rotation = tfMap.getRotation();
+	  ROS_ERROR("TF: x: %f, y: %f, z:%f", origin.x(), origin.y(), origin.z());
   }
+
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
       ROS_ERROR("Width %d, height %d",msg->info.width, msg->info.height);
       ROS_ERROR("Origin x; %f, Origin y: %f",msg->info.origin.position.x, msg->info.origin.position.y);
@@ -144,6 +153,9 @@ protected:
   ros::Subscriber tfSub; //subscriber for the tf topic
   ros::Subscriber odomSub; //subscriber for the odom topic
   tf::TransformListener tfList;
+  tf::StampedTransform tfMap;
+  tf::Vector3 origin;
+  tf::Quaternion rotation;
   enum FSM fsm; // Finite state machine for the random walk algorithm
   ros::Time rotateStartTime; // Start time of the rotation
   ros::Duration rotateDuration; // Duration of the rotation
