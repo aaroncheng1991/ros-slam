@@ -47,7 +47,8 @@ public:
 
   void tfCallback(const tf::tfMessage::ConstPtr& msg){
 	  try{
-		  tfList.lookupTransform("map", "odom", ros::Time(0), tfMap);
+          tfList.lookupTransform("map", "odom", ros::Time(0), tfMap);
+          tfList.lookupTransform("odom", "base_footprint", ros::Time(0), tfMap);
 	  }catch(tf::TransformException &exception){
 		  ROS_ERROR("%s", exception.what());
 	  }
