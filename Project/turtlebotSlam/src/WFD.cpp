@@ -6,6 +6,7 @@
 #include "nav_msgs/Odometry.h"
 #include "tf/tfMessage.h"
 #include "tf/transform_listener.h"
+#include "tf/transform_broadcaster.h"
 #include <cstdlib> // Needed for rand()
 #include <iostream>
 #include <ctime> // Needed to seed random number generator with a time value
@@ -28,7 +29,6 @@ public:
     // this->commandCallback() whenever a new message is published on that topic
     laserSub = nh.subscribe("base_scan", 1, &WFD::commandCallback, this);
     mapSub = nh.subscribe("map", 1, &WFD::mapCallback, this);
-    tfSub = nh.subscribe("tf", 1, &WFD::tfCallback, this);    
     odomSub = nh.subscribe("odom", 1, &WFD::odomCallback, this);
   };
 
@@ -41,87 +41,36 @@ public:
   };
 
   void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
-//	  ROS_ERROR("ODOM: x: %f, y: %f, z:%f", msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
-
-  }
-
-  void tfCallback(const tf::tfMessage::ConstPtr& msg){
-	  try{
-          tfList.lookupTransform("map", "odom", ros::Time(0), tfMap);
-          tfList.lookupTransform("odom", "base_footprint", ros::Time(0), tfMap);
-	  }catch(tf::TransformException &exception){
-		  ROS_ERROR("%s", exception.what());
-	  }
-	  origin = tfMap.getOrigin();
-	  rotation = tfMap.getRotation();
-	  ROS_ERROR("TF: x: %f, y: %f, z:%f", origin.x(), origin.y(), origin.z());
+	  try {
+		// X and Y translation coordinate from the origin, where the robot started
+		double x = msg->pose.pose.position.x;
+		double y = msg->pose.pose.position.y;
+		double turn = tf::getYaw(msg->pose.pose.orientation);
+		//Print out current translated position of the robot
+		ROS_ERROR("x: %f y: %f angle: %f", x, y, turn);
+		robot_pos[0] = x;
+		robot_pos[1] = y;
+		robot_pos[2] = turn;
+	} catch (tf::TransformException& ex) {
+		ROS_ERROR("Received an exception trying to transform a point from \"map\" to \"odom\": %s", ex.what());
+	}
   }
 
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
-      ROS_ERROR("Width %d, height %d",msg->info.width, msg->info.height);
-      ROS_ERROR("Origin x; %f, Origin y: %f",msg->info.origin.position.x, msg->info.origin.position.y);
+//     ROS_ERROR("Width %d, height %d",msg->info.width, msg->info.height);
+//      ROS_ERROR("Origin x; %f, Origin y: %f",msg->info.origin.position.x, msg->info.origin.position.y);
   }
 
   // Process the incoming laser scan message
   void commandCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
     if (fsm == FSM_MOVE_FORWARD) {
-      // Compute the average range value between MIN_SCAN_ANGLE and MAX_SCAN_ANGLE
-      //
-      // NOTE: ideally, the following loop should have additional checks to ensure
-      //       that indices are not out of bounds, by computing:
-      //
-      //       - currAngle = msg->angle_min + msg->angle_increment*currIndex
-      //
-      //       and then ensuring that currAngle <= msg->angle_max
-      unsigned int minIndex = ceil((MIN_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
-      unsigned int maxIndex = ceil((MAX_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
-      float closestRange = msg->ranges[minIndex];
-      for (unsigned int currIndex = minIndex + 1; currIndex < maxIndex; currIndex++) {
-    	  float currAngle = msg->angle_min + msg->angle_increment*currIndex;
-        if (msg->ranges[currIndex] < closestRange && currAngle <= msg->angle_max) {
-          closestRange = msg->ranges[currIndex];   }
-      }
-      ROS_INFO_STREAM("Range: " << closestRange);
-      // TODO: if range is smaller than PROXIMITY_RANGE_M, update fsm and rotateStartTime,
-      //       and also choose a reasonable rotateDuration (keeping in mind of the value
-      //       of ROTATE_SPEED_RADPS)
-      //
-      // HINT: you can obtain the current time by calling:
-      //
-      //       - ros::Time::now()
-      //
-      // HINT: you can set a ros::Duration by calling:
-      //
-      //       - ros::Duration(DURATION_IN_SECONDS_FLOATING_POINT)
-      //
-      // HINT: you can generate a random number between 0 and 99 by calling:
-      //
-      //       - rand() % 100
-      //
-      //       see http://www.cplusplus.com/reference/clibrary/cstdlib/rand/ for more details
-
-      if(closestRange <= PROXIMITY_RANGE_M){
-    	  fsm = FSM_ROTATE;
-    	  rotateStartTime = (ros::Time::now());
-    	  rotateDuration = ros::Duration(rand()%4);
-      }
+      
     }
   };
 
-  // Main FSM loop for ensuring that ROS messages are
-  // processed in a timely manner, and also for sending
-  // velocity controls to the simulated robot based on the FSM state
   void spin() {
     ros::Rate rate(5); // Specify the FSM loop rate in Hz
     while (ros::ok()) { // Keep spinning loop until user presses Ctrl+C
-      //
-      //       - move(0, ROTATE_SPEED_RADPS); // Rotate right
-      //
-      //       or
-      //
-      //       - move(FORWARD_SPEED_MPS, 0); // Move foward
-      //
-      //       depending on the FSM state; also change the FSM state when appropriate  
     	if(fsm == FSM_MOVE_FORWARD) {
     		move(FORWARD_SPEED_MPS,0);
     	} else {
@@ -151,12 +100,12 @@ protected:
   ros::Publisher commandPub; // Publisher to the simulated robot's velocity command topic
   ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic
   ros::Subscriber mapSub;  //Subscriber to the gmapping map topic
-  ros::Subscriber tfSub; //subscriber for the tf topic
   ros::Subscriber odomSub; //subscriber for the odom topic
-  tf::TransformListener tfList;
   tf::StampedTransform tfMap;
   tf::Vector3 origin;
   tf::Quaternion rotation;
+  ros::Timer timer;
+  double robot_pos[3];
   enum FSM fsm; // Finite state machine for the random walk algorithm
   ros::Time rotateStartTime; // Start time of the rotation
   ros::Duration rotateDuration; // Duration of the rotation
@@ -165,7 +114,7 @@ protected:
 int main(int argc, char **argv) {
   ros::init(argc, argv, "random_walk"); // Initiate new ROS node named "random_walk"
   ros::NodeHandle n;
-  WFD walker(n); // Create new random walk object
+  WFD walker(n); // Create new object
   walker.spin(); // Execute FSM loop
   return 0;
 };
