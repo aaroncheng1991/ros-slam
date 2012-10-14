@@ -49,14 +49,11 @@ public:
 		//Print out current translated position of the robot
 		ROS_ERROR("x: %f y: %f angle: %f", x, y, turn);
 
- 		ROS_ERROR("******************ceil(x/mapResolution): %f", ceil(x/mapResolution)); 
-		ROS_ERROR("******************mapSize[0] / 2: %d", mapSize[1] / 2);
-
-		robot_pos[0] = (mapSize[0] / 2) + (ceil(x/mapResolution));
-		robot_pos[1] = (mapSize[1] / 2) + (ceil(y/mapResolution));
+		robot_pos[0] = (mapSize[0] / 2) + ceil(x/mapResolution);
+		robot_pos[1] = (mapSize[1] / 2) + ceil(y/mapResolution);
 		robot_pos[2] = turn;
 
-		ROS_ERROR("xi: %d yi: %d", robot_pos[0], robot_pos[1]);
+		ROS_ERROR("xi: %f yi: %f", robot_pos[0], robot_pos[1]);
 	} catch (tf::TransformException& ex) {
 		ROS_ERROR("Received an exception trying to transform a point from \"map\" to \"odom\": %s", ex.what());
 	}
