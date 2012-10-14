@@ -24,22 +24,21 @@
 \frame{
 \frametitle{Introduction}
 \begin{itemize}
- \item Phase 1: Exploration, Frontier Detection
- \item Phase 2: Graph-based SLAM
- \item Phase 3: Exploration and Landmark detection
- \item Competing against other teams in the competition
+\item Turtlebot
+\item Robot Operating System (ROS)
+\item Simultaneous Localisation And Mapping (SLAM)
 \end{itemize}
-
 }
 
 \section{Problem Description}
 \frame{
 \frametitle{Problem Description}
--short problem description
-
--platform used
-
--turtlebot
+\begin{itemize}
+ \item Phase 1: Exploration, Frontier Detection
+ \item Phase 2: Graph-based SLAM
+ \item Phase 3: Exploration and Landmark detection
+ \item Competing against other teams
+\end{itemize}
 }
 
 \section{Exploration Algorithms}
@@ -56,62 +55,82 @@
 \frame{
 \frametitle{Random}
 \begin{itemize}
+\item Moves until it reaches a wall, Then rotates for a random amount of time
 \item Depends on the map
-\item Not usefull
+\item Not useful
+\item Reference for experiments
 \end{itemize}
 }
 \subsection{WFD}
 \frame{
-\frametitle{Wave Frontier Detection}
+\frametitle{Wavefront Frontier Detection}
 \begin{itemize}
 \item Very fast calculation of new frontiers
-\item Scans only regions, where the robot have already been
-\item Performs good in small areas
+\item Scans only regions, where the robot has already been
+\item Performs well in small areas
 \item Cannot be expected to perform well in large areas
 % pictures will follow when we get the program running
 \end{itemize}
 }
+
 \subsection{FFD}
 \frame{
 \frametitle{Fast Frontier Detection}
+\begin{itemize}
+\item Processes only new laser readings
+\item 4 steps
+\begin{itemize}
+\item Sorting of new data by angle
+\item Creating a contour of the sorted data
+\item Detecting new frontiers using the contour
+\item Maintenance of previously detected frontiers
+
+\end{itemize}
+\end{itemize}
+
 }
 
 \section{Experiments}
 \frame{
 \frametitle{Experiments}
--setup of experiments
-
-  -\% discovered when done
-  
-  -\% discovered over time
-  
-  -\% time taken
+Setup of experiments
+\begin{itemize}
+  \item Percentage discovered when done
+  \item Percentage discovered over time
+  \item Amount of time taken
+\end{itemize}
 }
 
 \section{Results}
 \frame{
 \frametitle{Results}
--results
+Waiting for a statistically relevant amount of data
 }
 
 \section{Conclusions}
 \frame{
 \frametitle{Conclusions}
--conclusions
-
--terrible documentation
+\begin{itemize}
+\item Tutorials are excellent
+\item Documentation is close to nonexistent
+\end{itemize}
 }
 
 \section{Planning}
 \frame{
 \frametitle{Planning}
--graph based SLAM
+\begin{itemize}
+  \item Graph-based SLAM
+  \item FFD
+  \item Entropy
+  \item Landmark detection
+\end{itemize}
+}
 
--chicken egg
-
--landmark detection
-
--entropy
+\section{Thanks}
+\frame{
+\frametitle{Thank you for your attention}
+Any questions?
 }
 
 \end{document}

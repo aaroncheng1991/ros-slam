@@ -9,3 +9,4 @@
 \beamer@sectionintoc {5}{Results}{10}{0}{5}
 \beamer@sectionintoc {6}{Conclusions}{11}{0}{6}
 \beamer@sectionintoc {7}{Planning}{12}{0}{7}
+\beamer@sectionintoc {8}{Thanks}{13}{0}{8}
