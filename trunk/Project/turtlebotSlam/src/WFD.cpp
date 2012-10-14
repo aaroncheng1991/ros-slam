@@ -48,17 +48,26 @@ public:
 		double turn = tf::getYaw(msg->pose.pose.orientation);
 		//Print out current translated position of the robot
 		ROS_ERROR("x: %f y: %f angle: %f", x, y, turn);
-		robot_pos[0] = x;
-		robot_pos[1] = y;
+
+ 		ROS_ERROR("******************ceil(x/mapResolution): %f", ceil(x/mapResolution)); 
+		ROS_ERROR("******************mapSize[0] / 2: %d", mapSize[1] / 2);
+
+		robot_pos[0] = (mapSize[0] / 2) + (ceil(x/mapResolution));
+		robot_pos[1] = (mapSize[1] / 2) + (ceil(y/mapResolution));
 		robot_pos[2] = turn;
+
+		ROS_ERROR("xi: %d yi: %d", robot_pos[0], robot_pos[1]);
 	} catch (tf::TransformException& ex) {
 		ROS_ERROR("Received an exception trying to transform a point from \"map\" to \"odom\": %s", ex.what());
 	}
   }
 
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
-//     ROS_ERROR("Width %d, height %d",msg->info.width, msg->info.height);
-//      ROS_ERROR("Origin x; %f, Origin y: %f",msg->info.origin.position.x, msg->info.origin.position.y);
+      mapSize[0] = msg->info.width;
+      mapSize[1] = msg->info.height;
+      mapResolution = msg->info.resolution;
+
+      ROS_ERROR("Width: %d, height: %d, resolution: %f ",mapSize[0], mapSize[1], mapResolution);
   }
 
   // Process the incoming laser scan message
@@ -106,6 +115,8 @@ protected:
   tf::Quaternion rotation;
   ros::Timer timer;
   double robot_pos[3];
+  int mapSize[2];
+  float mapResolution; 
   enum FSM fsm; // Finite state machine for the random walk algorithm
   ros::Time rotateStartTime; // Start time of the rotation
   ros::Duration rotateDuration; // Duration of the rotation
