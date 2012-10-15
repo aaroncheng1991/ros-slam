@@ -31,6 +31,7 @@ namespace wfd {
         void setState(_pose pose, wfdstate state);
     public:
         WaveFrontierDetector(const nav_msgs::OccupancyGrid::ConstPtr& map);
+        ~WaveFrontierDetector();
 
         /**
          * qm is used for detecting frontier points from a given map

@@ -7,6 +7,7 @@
 #include "tf/tfMessage.h"
 #include "tf/transform_listener.h"
 #include "tf/transform_broadcaster.h"
+#include "visualization_msgs/Marker.h"
 #include <cstdlib> // Needed for rand()
 #include <iostream>
 #include <ctime> // Needed to seed random number generator with a time value
@@ -28,11 +29,13 @@ public:
     // (the second argument indicates that if multiple command messages are in
     //  the queue to be sent, only the last command will be sent)
     commandPub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    pointPub = nh.advertise<visualization_msgs::Marker>("frontiers", 10);
     // Subscribe to the simulated robot's laser scan topic and tell ROS to call
     // this->commandCallback() whenever a new message is published on that topic
     laserSub = nh.subscribe("base_scan", 1, &WFD::commandCallback, this);
     mapSub = nh.subscribe("map", 1, &WFD::mapCallback, this);
     odomSub = nh.subscribe("odom", 1, &WFD::odomCallback, this);
+    hasMap = false;
   };
 
   // Send a velocity command 
@@ -46,7 +49,7 @@ public:
   void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	  try {
 		// X and Y translation coordinate from the origin, where the robot started
-		double x = msg->pose.pose.position.x;
+        double x = msg->pose.pose.position.x;
 		double y = msg->pose.pose.position.y;
 		double turn = tf::getYaw(msg->pose.pose.orientation);
 		//ROS_ERROR("x: %f y: %f angle: %f", x, y, turn);
@@ -57,17 +60,33 @@ public:
         //Print out current translated position of the robot
         ROS_ERROR("start: xi: %f yi: %f", robot_pos[0], robot_pos[1]);
 
-        ROS_ERROR("DOING WFD");
         wfd::_pose pose;
         pose.x = robot_pos[0];
         pose.y = robot_pos[1];
-        if(std::isnan(pose.x) || std::isnan(pose.y)) return;
+        ROS_ERROR("CHECK");
+
+        if(!hasMap || std::isnan(pose.x) || std::isnan(pose.y) || pose.x < 0 || pose.x >= map->info.width || pose.y < 0 || pose.y >= map->info.height){ ROS_ERROR("NOWFD"); return;}
+        ROS_ERROR("DOING WFD");
         wfd::WaveFrontierDetector frontierDetector(map);
         std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
+        visualization_msgs::Marker points;
+        points.header.stamp = ros::Time::now();
+        points.action = visualization_msgs::Marker::ADD;
+        points.id = 0;
+        points.type = visualization_msgs::Marker::POINTS;
+        points.scale.x = 0.2;
+        points.scale.y = 0.2;
+        points.color.g = 1.0f;
+        points.color.a = 1.0;
         ROS_ERROR("has %d frontiers", frontiers.size());
         for(unsigned int i = 0 ; i < frontiers.size() ; ++i) {
             ROS_ERROR("frontier %d: x: %f, y: %f", i, frontiers[i].x, frontiers[i].y);
+            geometry_msgs::Point p;
+            p.x = frontiers[0].x;
+            p.y= frontiers[0].y;
+            points.points.push_back(p);
         }
+        pointPub.publish(points);
 
 	} catch (tf::TransformException& ex) {
 		ROS_ERROR("Received an exception trying to transform a point from \"map\" to \"odom\": %s", ex.what());
@@ -76,6 +95,7 @@ public:
 
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
       this->map = msg;
+      hasMap = true;
       mapSize[0] = msg->info.width;
       mapSize[1] = msg->info.height;
       mapResolution = msg->info.resolution;
@@ -123,6 +143,7 @@ protected:
   ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic
   ros::Subscriber mapSub;  //Subscriber to the gmapping map topic
   ros::Subscriber odomSub; //subscriber for the odom topic
+  ros::Publisher pointPub;
   tf::StampedTransform tfMap;
   tf::Vector3 origin;
   tf::Quaternion rotation;
@@ -134,6 +155,7 @@ protected:
   ros::Time rotateStartTime; // Start time of the rotation
   ros::Duration rotateDuration; // Duration of the rotation
   nav_msgs::OccupancyGrid::ConstPtr map;
+  bool hasMap;
 };
 
 int main(int argc, char **argv) {
