@@ -1,77 +1,141 @@
 #include "turtlebotSlam/wavefrontierdetector.h"
 #include <vector>
+#include "ros/console.h"
+namespace wfd {
+    const int operations[4][2] = {{1,0}, {-1,0}, {0,1}, {0,-1}};
 
-WaveFrontierDetector::WaveFrontierDetector()
-{
-}
-
-bool WaveFrontierDetector::isFrontier(wfdpose pose) {
-    // TODO
-    return true;
-}
-
-std::vector<wfdpose> WaveFrontierDetector::adj(wfdpose pose) {
-    // TODO
-    return std::vector<wfdpose>();
-}
-
-void WaveFrontierDetector::save(std::vector<wfdpose> toSave) {
-    // TODO
-}
-
-bool WaveFrontierDetector::hasOpenSpaceNeighbor(wfdpose pose) {
-    // TODO
-    return true;
-}
-
-void WaveFrontierDetector::wfd(std::queue<wfdpose> qm, std::queue<wfdpose> qf, wfdpose pose) {
-    qm = std::queue<wfdpose>();
-    qm.push(pose);
-    pose.state = MAP_OPEN_LIST;
-
-    while(!qm.empty()) {
-        wfdpose p = qm.front();
-        if(p.state == MAP_CLOSE_LIST) {
-            continue;
-        } else if(isFrontier(p)) {
-            qf = std::queue<wfdpose>();
-            std::vector<wfdpose> newFrontier;
-            qf.push(p);
-            p.state = FRONTIER_OPEN_LIST;
-
-            while(!qf.empty()) {
-                wfdpose q = qf.front();
-                if(q.state == MAP_CLOSE_LIST || q.state == FRONTIER_CLOSE_LIST) {
-                    continue;
-                }
-                if(isFrontier(q)) {
-                    newFrontier.push_back(q);
-                    std::vector<wfdpose> adjlist = adj(q);
-                    for(unsigned int i = 0 ; i < adjlist.size() ; ++i) {
-                        wfdpose w = adjlist[i];
-                        if(w.state != FRONTIER_OPEN_LIST && w.state != FRONTIER_CLOSE_LIST && w.state != MAP_CLOSE_LIST) {
-                            qf.push(w);
-                            w.state = FRONTIER_OPEN_LIST;
-                        }
-                    }
-                }
-                q.state = FRONTIER_CLOSE_LIST;
-                save(newFrontier);
-                for(int i = 0 ; i < newFrontier.size() ; ++i) {
-                    newFrontier[i].state = MAP_CLOSE_LIST;
-                }
-            }
-            std::vector<wfdpose> adjlist = adj(p);
-            for(int i = 0 ; i < adjlist.size() ; ++i) {
-                wfdpose v = adjlist[i];
-                if(v.state != MAP_OPEN_LIST && v.state != MAP_CLOSE_LIST && hasOpenSpaceNeighbor(v)) {
-                    qm.push(v);
-                    v.state = MAP_OPEN_LIST;
-                }
-            }
-            p.state = MAP_CLOSE_LIST;
+    WaveFrontierDetector::WaveFrontierDetector(const nav_msgs::OccupancyGrid::ConstPtr& map)
+    {
+        this->map = map;
+        int height = map->info.height;
+        int width = map->info.width;
+        this->states = new wfdstate*[height];
+        for(unsigned int i = 0 ; i < map->info.height ; ++i) {
+            this->states[i] = new wfdstate[width];
+            std::fill_n(this->states[i], map->info.width, NONE);
         }
-
     }
 
+    wfdstate WaveFrontierDetector::getState(_pose pose) {
+        return (this->states[(int)pose.y][(int)pose.x]);
+    }
+
+    void WaveFrontierDetector::setState(_pose pose, wfdstate state) {
+        (this->states[(int)pose.y][(int)pose.x]) = state;
+    }
+
+    bool WaveFrontierDetector::allowed(int x, int y) {
+        int width = this->map->info.width;
+        int height = this->map->info.height;
+        return x >= 0 && x < width && y >= 0 && y < height;
+    }
+
+    bool WaveFrontierDetector::isUnexplored(int x, int y) {
+        int height = this->map->info.height;
+        ROS_ERROR("explored? %d, %d => %f", y, x, this->map->data[y*height+x]);
+        return (this->map->data[y*height+x]) == -1;
+    }
+
+    bool WaveFrontierDetector::isFrontier(_pose pose) {
+        // a point is a frontier, when one neighbour of that point has unexplored regions, but there have to be also explored neighbours
+        bool unexplored = false;
+        bool explored = false;
+        for(unsigned int i = 0 ; i < 4 ; ++i) {
+            double nx = pose.x + (operations[i][0]);
+            double ny = pose.y + (operations[i][1]);
+            if(allowed(nx, ny)) {
+                if(isUnexplored(nx, ny)) {
+                    ROS_ERROR("unexplored!");
+                    unexplored = true;
+                } else {
+                    explored = true;
+                }
+            }
+        }
+        return unexplored && explored;
+    }
+
+    std::vector<_pose> WaveFrontierDetector::adj(_pose pose) {
+        std::vector<_pose> poses;
+        for(unsigned int i = 0 ; i < 4 ; ++i) {
+            int nx = pose.x + operations[i][0];
+            int ny = pose.y + operations[i][1];
+            _pose npose;
+            npose.x = nx;
+            npose.y = ny;
+            if(allowed(nx, ny)) poses.push_back(npose);
+        }
+        return poses;
+    }
+
+    void WaveFrontierDetector::save(std::vector<_pose> toSave) {
+        for(unsigned int i = 0 ; i < toSave.size() ; ++i) {
+            this->frontiers.push_back(toSave[i]);
+        }
+    }
+
+    bool WaveFrontierDetector::hasOpenSpaceNeighbor(_pose pose) {
+        // one neighbour with no obstacles
+        int height = this->map->info.height;
+        int x = pose.x;
+        int y = pose.y;
+        for(unsigned int i = 0 ; i < 4 ; ++i) {
+            if(allowed(x, y) && this->map->data[y*height+x]) return true;
+        }
+        return false;
+    }
+
+    std::vector<_pose> WaveFrontierDetector::wfd(_pose pose) {
+        std::queue<_pose> qm = std::queue<_pose>();
+        qm.push(pose);
+        setState(pose, MAP_OPEN_LIST);
+
+        while(!qm.empty()) {
+            _pose p = qm.front();
+            qm.pop();
+            if(getState(p) == MAP_CLOSE_LIST) {
+                continue;
+            } else if(isFrontier(p)) {
+                std::queue<_pose> qf = std::queue<_pose>();
+                std::vector<_pose> newFrontier;
+                qf.push(p);
+                setState(p, FRONTIER_OPEN_LIST);
+
+                while(!qf.empty()) {
+                    _pose q = qf.front();
+                    qf.pop();
+                    if(getState(q) == MAP_CLOSE_LIST || getState(q) == FRONTIER_CLOSE_LIST) {
+                        continue;
+                    }
+                    if(isFrontier(q)) {
+                        newFrontier.push_back(q);
+                        std::vector<_pose> adjlist = adj(q);
+                        for(unsigned int i = 0 ; i < adjlist.size() ; ++i) {
+                            _pose w = adjlist[i];
+                            if(getState(w) != FRONTIER_OPEN_LIST && getState(w) != FRONTIER_CLOSE_LIST && getState(w) != MAP_CLOSE_LIST) {
+                                qf.push(w);
+                                setState(w, FRONTIER_OPEN_LIST);
+                            }
+                        }
+                    }
+                    setState(q, FRONTIER_CLOSE_LIST);
+                    save(newFrontier);
+                    for(unsigned int i = 0 ; i < newFrontier.size() ; ++i) {
+                        setState(newFrontier[i], MAP_CLOSE_LIST);
+                    }
+                }
+                std::vector<_pose> adjlist = adj(p);
+                for(unsigned int i = 0 ; i < adjlist.size() ; ++i) {
+                    _pose v = adjlist[i];
+                    if(getState(v) != MAP_OPEN_LIST && getState(v) != MAP_CLOSE_LIST && hasOpenSpaceNeighbor(v)) {
+                        qm.push(v);
+                        setState(v, MAP_OPEN_LIST);
+                    }
+                }
+                setState(p, MAP_CLOSE_LIST);
+            }
+
+        }
+        return this->frontiers;
+    }
 }
