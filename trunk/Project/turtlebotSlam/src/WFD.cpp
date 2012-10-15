@@ -10,6 +10,9 @@
 #include <cstdlib> // Needed for rand()
 #include <iostream>
 #include <ctime> // Needed to seed random number generator with a time value
+#include <cmath>
+
+#include "turtlebotSlam/wavefrontierdetector.h"
 
 
 class WFD {
@@ -51,15 +54,28 @@ public:
 		robot_pos[0] = (mapSize[0] / 2) + ceil(x/mapResolution);
 		robot_pos[1] = (mapSize[1] / 2) + ceil(y/mapResolution);
 		robot_pos[2] = turn;
+        //Print out current translated position of the robot
+        ROS_ERROR("start: xi: %f yi: %f", robot_pos[0], robot_pos[1]);
 
-		//Print out current translated position of the robot
-		ROS_ERROR("xi: %f yi: %f", robot_pos[0], robot_pos[1]);
+        ROS_ERROR("DOING WFD");
+        wfd::_pose pose;
+        pose.x = robot_pos[0];
+        pose.y = robot_pos[1];
+        if(std::isnan(pose.x) || std::isnan(pose.y)) return;
+        wfd::WaveFrontierDetector frontierDetector(map);
+        std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
+        ROS_ERROR("has %d frontiers", frontiers.size());
+        for(unsigned int i = 0 ; i < frontiers.size() ; ++i) {
+            ROS_ERROR("frontier %d: x: %f, y: %f", i, frontiers[i].x, frontiers[i].y);
+        }
+
 	} catch (tf::TransformException& ex) {
 		ROS_ERROR("Received an exception trying to transform a point from \"map\" to \"odom\": %s", ex.what());
 	}
   }
 
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
+      this->map = msg;
       mapSize[0] = msg->info.width;
       mapSize[1] = msg->info.height;
       mapResolution = msg->info.resolution;
@@ -117,6 +133,7 @@ protected:
   enum FSM fsm; // Finite state machine for the random walk algorithm
   ros::Time rotateStartTime; // Start time of the rotation
   ros::Duration rotateDuration; // Duration of the rotation
+  nav_msgs::OccupancyGrid::ConstPtr map;
 };
 
 int main(int argc, char **argv) {

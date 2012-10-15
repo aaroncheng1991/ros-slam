@@ -2,37 +2,42 @@
 #define WAVEFRONTIERDETECTOR_H
 
 #include <queue>
-#include "nav_msgs/MapMetaData.h"
-typedef nav_msgs::MapMetaData::_origin_type _pose;
+#include "nav_msgs/OccupancyGrid.h"
+namespace wfd {
+    typedef  nav_msgs::OccupancyGrid::_info_type::_origin_type::_position_type _pose;
 
-enum wfdstate {
-    MAP_OPEN_LIST,
-    MAP_CLOSE_LIST,
-    FRONTIER_OPEN_LIST,
-    FRONTIER_CLOSE_LIST
-};
+    enum wfdstate {
+        MAP_OPEN_LIST,
+        MAP_CLOSE_LIST,
+        FRONTIER_OPEN_LIST,
+        FRONTIER_CLOSE_LIST,
+        NONE
+    };
 
-struct wfdpose {
-    _pose pose;
-    wfdstate state;
-};
+    class WaveFrontierDetector
+    {
+    private:
+        nav_msgs::OccupancyGrid::ConstPtr map;
+        wfdstate **states;
+        std::vector<_pose> frontiers;
 
-class WaveFrontierDetector
-{
-private:
-    bool isFrontier(wfdpose pose);
-    std::vector<wfdpose> adj(wfdpose pose);
-    void save(std::vector<wfdpose> toSave);
-    bool hasOpenSpaceNeighbor(wfdpose pose);
-public:
-    WaveFrontierDetector();
+        bool isFrontier(_pose pose);
+        std::vector<_pose> adj(_pose pose);
+        void save(std::vector<_pose> toSave);
+        bool hasOpenSpaceNeighbor(_pose pose);
+        bool isUnexplored(int x, int y);
+        bool allowed(int x, int y);
+        wfdstate getState(_pose pose);
+        void setState(_pose pose, wfdstate state);
+    public:
+        WaveFrontierDetector(const nav_msgs::OccupancyGrid::ConstPtr& map);
 
-    /**
-     * qm is used for detecting frontier points from a given map
-     * qf is used for extracting a frontier from a given frontier cell
-     * pose is the actual pose of the robot
-     **/
-    void wfd(std::queue<wfdpose> qm, std::queue<wfdpose> qf, wfdpose pose);
-};
-
+        /**
+         * qm is used for detecting frontier points from a given map
+         * qf is used for extracting a frontier from a given frontier cell
+         * pose is the actual pose of the robot
+         **/
+        std::vector<_pose> wfd(_pose pose);
+    };
+}
 #endif // WAVEFRONTIERDETECTOR_H
