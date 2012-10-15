@@ -77,8 +77,8 @@ public:
         points.action = visualization_msgs::Marker::ADD;
         points.id = 0;
         points.type = visualization_msgs::Marker::POINTS;
-        points.scale.x = 0.2;
-        points.scale.y = 0.2;
+        points.scale.x = 0.02;
+        points.scale.y = 0.02;
         points.color.g = 1.0f;
         points.color.a = 1.0;
         ROS_ERROR("has %d frontiers", frontiers.size());
@@ -91,7 +91,11 @@ public:
 
             points.points.push_back(p);
             points.colors.push_back(points.color);
-        }
+       }
+        geometry_msgs::Point p;
+        p.x = x;
+        p.y = y;
+        points.points.push_back(p);
         ROS_ERROR("size: %d", points.points.size());
         pointPub.publish(points);
 
