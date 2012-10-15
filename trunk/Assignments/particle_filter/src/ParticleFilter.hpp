@@ -14,6 +14,12 @@ class MyLocaliser: public MCLocaliser
 {
 public:
 
+    MyLocaliser( int particleCount = 100 ) : MCLocaliser(particleCount), sizeD(particleCount) { distances = new double[particleCount]; }
+    virtual ~MyLocaliser(){ delete distances; }
+
+    int sizeD;
+    double* distances;
+
  /**  
   * Just place all particles on a line along x=y. This should be
   * replaced with something more sensible, like drawing particles
