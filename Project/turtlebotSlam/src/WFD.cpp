@@ -29,7 +29,7 @@ public:
     // (the second argument indicates that if multiple command messages are in
     //  the queue to be sent, only the last command will be sent)
     commandPub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-    pointPub = nh.advertise<visualization_msgs::Marker>("frontiers", 10);
+    pointPub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 10);
     // Subscribe to the simulated robot's laser scan topic and tell ROS to call
     // this->commandCallback() whenever a new message is published on that topic
     laserSub = nh.subscribe("base_scan", 1, &WFD::commandCallback, this);
@@ -58,19 +58,22 @@ public:
 		robot_pos[1] = (mapSize[1] / 2) + ceil(y/mapResolution);
 		robot_pos[2] = turn;
         //Print out current translated position of the robot
-        ROS_ERROR("start: xi: %f yi: %f", robot_pos[0], robot_pos[1]);
+        //ROS_ERROR("start: xi: %f yi: %f", robot_pos[0], robot_pos[1]);
 
         wfd::_pose pose;
         pose.x = robot_pos[0];
         pose.y = robot_pos[1];
-        ROS_ERROR("CHECK");
 
-        if(!hasMap || std::isnan(pose.x) || std::isnan(pose.y) || pose.x < 0 || pose.x >= map->info.width || pose.y < 0 || pose.y >= map->info.height){ ROS_ERROR("NOWFD"); return;}
-        ROS_ERROR("DOING WFD");
+        if(!hasMap || std::isnan(pose.x) || std::isnan(pose.y) || pose.x < 0 || pose.x >= map->info.width || pose.y < 0 || pose.y >= map->info.height) return;
         wfd::WaveFrontierDetector frontierDetector(map);
         std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
+
+        // visualization
         visualization_msgs::Marker points;
         points.header.stamp = ros::Time::now();
+        points.header.frame_id = "/odom";
+        points.ns = "turtlebotSlam";
+        points.pose.orientation.w = 1.0;
         points.action = visualization_msgs::Marker::ADD;
         points.id = 0;
         points.type = visualization_msgs::Marker::POINTS;
@@ -80,12 +83,16 @@ public:
         points.color.a = 1.0;
         ROS_ERROR("has %d frontiers", frontiers.size());
         for(unsigned int i = 0 ; i < frontiers.size() ; ++i) {
-            ROS_ERROR("frontier %d: x: %f, y: %f", i, frontiers[i].x, frontiers[i].y);
+            //ROS_ERROR("frontier %d: x: %f, y: %f", i, frontiers[i].x, frontiers[i].y);
             geometry_msgs::Point p;
-            p.x = frontiers[0].x;
-            p.y= frontiers[0].y;
+            p.x = (frontiers[i].x - mapSize[0]/2) * mapResolution;
+            p.y= (frontiers[i].y - mapSize[0]/2) * mapResolution;
+            p.z = 0;
+
             points.points.push_back(p);
+            points.colors.push_back(points.color);
         }
+        ROS_ERROR("size: %d", points.points.size());
         pointPub.publish(points);
 
 	} catch (tf::TransformException& ex) {

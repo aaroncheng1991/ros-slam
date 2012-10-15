@@ -1,6 +1,6 @@
 <launch>
   <node pkg="stage" type="stageros" name="stageros" args="$(find turtlebotSlam)/world/swarmlab_single_turtle.world" respawn="false" output="screen" />
-  <node pkg="turtlebotSlam" name="turtlebotSlam" type="turtlebotSlam" /> 
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebotSlam)/view.vcg" />
+  <node pkg="turtlebotSlam" name="turtlebotSlam" type="turtlebotSlam" output="screen"/> 
+  <!--<node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebotSlam)/view.vcg" />-->
   <node pkg="gmapping" name="slam_gmapping" type="slam_gmapping" args="scan:=base_scan" />
 </launch>
