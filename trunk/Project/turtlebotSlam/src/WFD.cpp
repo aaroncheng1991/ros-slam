@@ -12,6 +12,8 @@
 #include <iostream>
 #include <ctime> // Needed to seed random number generator with a time value
 #include <cmath>
+#include <ostream>
+#include <fstream>
 
 #include "turtlebotSlam/wavefrontierdetector.h"
 
@@ -51,14 +53,12 @@ public:
 		// X and Y translation coordinate from the origin, where the robot started
         double x = msg->pose.pose.position.x;
 		double y = msg->pose.pose.position.y;
-		double turn = tf::getYaw(msg->pose.pose.orientation);
-		//ROS_ERROR("x: %f y: %f angle: %f", x, y, turn);
+        double turn = tf::getYaw(msg->pose.pose.orientation);
 
 		robot_pos[0] = (mapSize[0] / 2) + ceil(x/mapResolution);
 		robot_pos[1] = (mapSize[1] / 2) + ceil(y/mapResolution);
 		robot_pos[2] = turn;
         //Print out current translated position of the robot
-        //ROS_ERROR("start: xi: %f yi: %f", robot_pos[0], robot_pos[1]);
 
         wfd::_pose pose;
         pose.x = robot_pos[0];
@@ -81,27 +81,22 @@ public:
         points.scale.y = 0.02;
         points.color.g = 1.0f;
         points.color.a = 1.0;
-        ROS_ERROR("has %d frontiers", frontiers.size());
+
         for(unsigned int i = 0 ; i < frontiers.size() ; ++i) {
-            //ROS_ERROR("frontier %d: x: %f, y: %f", i, frontiers[i].x, frontiers[i].y);
             geometry_msgs::Point p;
             p.x = (frontiers[i].x - mapSize[0]/2) * mapResolution;
-            p.y= (frontiers[i].y - mapSize[0]/2) * mapResolution;
+            p.y= (frontiers[i].y - mapSize[1]/2) * mapResolution;
             p.z = 0;
 
             points.points.push_back(p);
             points.colors.push_back(points.color);
        }
-        geometry_msgs::Point p;
-        p.x = x;
-        p.y = y;
-        points.points.push_back(p);
-        ROS_ERROR("size: %d", points.points.size());
-        pointPub.publish(points);
+       pointPub.publish(points);
 
 	} catch (tf::TransformException& ex) {
 		ROS_ERROR("Received an exception trying to transform a point from \"map\" to \"odom\": %s", ex.what());
 	}
+      //ROS_ERROR("x: %f y: %f angle: %f", x, y, turn);
   }
 
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
@@ -110,8 +105,6 @@ public:
       mapSize[0] = msg->info.width;
       mapSize[1] = msg->info.height;
       mapResolution = msg->info.resolution;
-
-      ROS_ERROR("Width: %d, height: %d, resolution: %f ",mapSize[0], mapSize[1], mapResolution);
   }
 
   // Process the incoming laser scan message

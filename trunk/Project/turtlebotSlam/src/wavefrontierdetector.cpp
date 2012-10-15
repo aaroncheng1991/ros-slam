@@ -39,7 +39,6 @@ namespace wfd {
 
     bool WaveFrontierDetector::isUnexplored(int x, int y) {
         int width = this->map->info.height;
-        bool ue = ((double)this->map->data[y*width+x]) == -1;
         return (this->map->data[y*width+x]) == -1;
     }
 
@@ -86,7 +85,7 @@ namespace wfd {
         float x = pose.x;
         float y = pose.y;
         for(unsigned int i = 0 ; i < 4 ; ++i) {
-            if(allowed(x, y) && this->map->data[y*width+x]) return true;
+            if(allowed(x, y) && this->map->data[y*width+x] < 5) return true;
         }
         return false;
     }
