@@ -16,7 +16,7 @@
   <depend package="rviz"/>
   <depend package="stage"/>
   <depend package="std_msgs"/>
-
+  <depend package="visualization_msgs"/>
 </package>
 
 
