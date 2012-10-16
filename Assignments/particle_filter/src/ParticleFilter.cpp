@@ -17,21 +17,25 @@
   */
   void MyLocaliser::initialisePF( const geometry_msgs::PoseWithCovarianceStamped& initialpose )
   {
+      double xR = initialpose.pose.pose.position.x,
+              yR = initialpose.pose.pose.position.y,
+             tR = tf::getYaw(initialpose.pose.pose.orientation);
+
 	  boost::mt19937 rng; 
-      boost::normal_distribution<> xDistr(initialpose.pose.pose.position.x,1.0);
+      boost::normal_distribution<> xDistr(0,1.0);
 	  boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varX(rng, xDistr);
 
-      boost::normal_distribution<> yDistr(initialpose.pose.pose.position.y,1.0);
+      boost::normal_distribution<> yDistr(0,1.0);
 	  boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varY(rng, yDistr);
 
-      boost::normal_distribution<> oDistr(tf::getYaw(initialpose.pose.pose.orientation),1.0);
+      boost::normal_distribution<> oDistr(0,1.0);
 	  boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varO(rng, oDistr);
 
     for (unsigned int i = 0; i < particleCloud.poses.size(); ++i)
     {
-      particleCloud.poses[i].position.x = varX();
-      particleCloud.poses[i].position.y = varY();
-      geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(varO());
+      particleCloud.poses[i].position.x = xR + varX();
+      particleCloud.poses[i].position.y = yR +  varY();
+      geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw( tR + varO());
       particleCloud.poses[i].orientation = odom_quat;
     }
   }
@@ -46,23 +50,25 @@
   void MyLocaliser::applyMotionModel( double deltaX, double deltaY, double deltaT )
   {
       boost::mt19937 rng;
-      boost::normal_distribution<> xDistr(deltaX,0.001);
+      boost::normal_distribution<> xDistr(0,(deltaX/10)*(deltaX/10));
       boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varX(rng, xDistr);
-      boost::normal_distribution<> yDistr(deltaY,0.001);
+
+      boost::normal_distribution<> yDistr(0,(deltaY/10)*(deltaY/10));
       boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varY(rng, yDistr);
 
-      boost::normal_distribution<> oDistr(deltaT,0.001);
+      boost::normal_distribution<> oDistr(0,(deltaT/10)*(deltaT/10));
       boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varO(rng, oDistr);
 
 
     if (deltaX > 0 or deltaY > 0 or deltaT > 0){
       ROS_DEBUG( "applying odometry: %f %f %f", deltaX, deltaY, deltaT );
+
     for (unsigned int i = 0; i < particleCloud.poses.size(); ++i)
     {
-        particleCloud.poses[i].position.x += varX();
-        particleCloud.poses[i].position.y += varY();
+        particleCloud.poses[i].position.x += deltaX + varX();
+        particleCloud.poses[i].position.y += deltaY + varY();
 
-        geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(tf::getYaw(particleCloud.poses[i].orientation)+varO());
+        geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(tf::getYaw(particleCloud.poses[i].orientation)+varO()+deltaT);
         particleCloud.poses[i].orientation = odom_quat;
     }
     }
@@ -77,11 +83,16 @@
    */
   void MyLocaliser::applySensorModel( const sensor_msgs::LaserScan& scan )
   {
-      double eR = 0;
+
+      double eR = 0, maxR = 0;
       for(unsigned int k = 0; k < scan.ranges.size(); ++k){
           eR += scan.ranges[k];
+
+          if(maxR < scan.ranges[k])
+              maxR = scan.ranges[k];
       }
       eR /= scan.ranges.size();
+      eR /= maxR;
 
     /* This method is the beginning of an implementation of a beam
      * sensor model */  
@@ -103,26 +114,42 @@
         continue;
       }
 
-      double eS = 0;
+      double eS = 0, maxS=0;
       for(unsigned int k = 0; k < simulatedScan->ranges.size(); ++k){
           eS += simulatedScan->ranges[k];
+
+          if(maxS < simulatedScan->ranges[k])
+              maxS = simulatedScan->ranges[k];
       }
       eS /= simulatedScan->ranges.size();
+      eS /= maxS;
 
       /* Now we have the actual scan, and a simulated version ---
        * i.e., how a scan would look if the robot were at the pose
        * that particle i says it is in. So now we should evaluate how
        * likely this pose is; i.e., the actual sensor model. */
 
-      double dist = 0, maxD = 0;
+      double dist = 0;
 
       for(unsigned int k = 0; k < simulatedScan->ranges.size(); ++k){
-          double temp = abs((simulatedScan->ranges[k]-eS)* (scan.ranges[k]-eR));
-          maxD = maxD < temp ? temp : maxD;
-          dist += temp;
+          double simCoVar = simulatedScan->ranges[k]/maxS,
+                  realCoVar = scan.ranges[k]/maxR;
+
+          //ROS_ERROR("A: %f::%f",simCoVar, realCoVar);
+
+          simCoVar -= eS;
+          realCoVar -= eR;
+
+          //ROS_ERROR("B: %f::%f",simCoVar, realCoVar);
+
+
+          dist+= fabs(simCoVar * realCoVar);
       }
 
-      distances[i] = (distances[i] * 0.9) + (dist/10);
+      distances[key][i] = dist;
+
+      //ROS_ERROR("B: %f", distances[key][i]);
+
          //if (i == 0)
          //{
          //  for (unsigned int k = 0; k < simulatedScan->ranges.size(); ++k)
@@ -130,6 +157,8 @@
          //  std::cerr << "\n\n";
          //}
     }
+
+    key = (key+1)%WEIGHTS_LENGTH;
   }
 
   
@@ -142,22 +171,29 @@
     return this->particleCloud;
   }
 
-
-
   /**
    * Update and return the most likely pose. 
    */
   geometry_msgs::PoseWithCovariance MyLocaliser::updatePose()
   {
-
-
-
-    double lowestDistance = DBL_MAX;
+      int particleCount = this->particleCloud.poses.size();
+     double lowestDistance = DBL_MAX;
     int bestGuess=0;
-    for(unsigned int i=0;i<sizeD;++i){
-        if(distances[i] < lowestDistance){
+    for(unsigned int i=0;i<particleCount;++i){
+
+        if(distances[key][i] < 0.1)
+            continue;
+
+        double dist = 0;
+        for(int k = 0; k < WEIGHTS_LENGTH ; ++k){
+           // ROS_ERROR("A - %d=%d :: %f", i, k, distances[(key + k) % WEIGHTS_LENGTH][i]);
+            dist += distances[(key + k) % WEIGHTS_LENGTH][i] * weights[k];
+        }
+
+        if(dist < lowestDistance){
             bestGuess=i;
-            lowestDistance = distances[i];
+            lowestDistance = dist;
+            //ROS_ERROR("NEW BEST: %f - %d", dist, i);
         }
     }
 
