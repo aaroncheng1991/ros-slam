@@ -60,38 +60,6 @@ public:
 		robot_pos[2] = turn;
         //Print out current translated position of the robot
 
-        wfd::_pose pose;
-        pose.x = robot_pos[0];
-        pose.y = robot_pos[1];
-
-        if(!hasMap || std::isnan(pose.x) || std::isnan(pose.y) || pose.x < 0 || pose.x >= map->info.width || pose.y < 0 || pose.y >= map->info.height) return;
-        wfd::WaveFrontierDetector frontierDetector(map);
-        std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
-
-        // visualization
-        visualization_msgs::Marker points;
-        points.header.stamp = ros::Time::now();
-        points.header.frame_id = "/odom";
-        points.ns = "turtlebotSlam";
-        points.pose.orientation.w = 1.0;
-        points.action = visualization_msgs::Marker::ADD;
-        points.id = 0;
-        points.type = visualization_msgs::Marker::POINTS;
-        points.scale.x = 0.02;
-        points.scale.y = 0.02;
-        points.color.g = 1.0f;
-        points.color.a = 1.0;
-
-        for(unsigned int i = 0 ; i < frontiers.size() ; ++i) {
-            geometry_msgs::Point p;
-            p.x = (frontiers[i].x - mapSize[0]/2) * mapResolution;
-            p.y= (frontiers[i].y - mapSize[1]/2) * mapResolution;
-            p.z = 0;
-
-            points.points.push_back(p);
-            points.colors.push_back(points.color);
-       }
-       pointPub.publish(points);
 
 	} catch (tf::TransformException& ex) {
 		ROS_ERROR("Received an exception trying to transform a point from \"map\" to \"odom\": %s", ex.what());
@@ -105,6 +73,41 @@ public:
       mapSize[0] = msg->info.width;
       mapSize[1] = msg->info.height;
       mapResolution = msg->info.resolution;
+
+      wfd::_pose pose;
+      pose.x = robot_pos[0];
+      pose.y = robot_pos[1];
+
+      if(!hasMap || std::isnan(pose.x) || std::isnan(pose.y) || pose.x < 0 || pose.x >= map->info.width || pose.y < 0 || pose.y >= map->info.height) return;
+      wfd::WaveFrontierDetector frontierDetector(map);
+      std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
+
+      // visualization
+      visualization_msgs::Marker points;
+      points.header.stamp = ros::Time::now();
+      points.header.frame_id = "/map";
+      points.ns = "turtlebotSlam";
+      points.pose.orientation.w = 1.0;
+      points.action = visualization_msgs::Marker::ADD;
+      points.id = 0;
+      points.type = visualization_msgs::Marker::POINTS;
+      points.scale.x = 0.8;
+      points.scale.y = 0.8;
+      points.color.g = 1.0f;
+      points.color.a = 0.01;
+
+      for(unsigned int i = 0 ; i < frontiers.size() ; ++i) {
+          geometry_msgs::Point p;
+          p.x = (frontiers[i].x - mapSize[0]/2) * mapResolution;
+          p.y= (frontiers[i].y - mapSize[1]/2) * mapResolution;
+          p.z = 0;
+
+          points.points.push_back(p);
+          points.colors.push_back(points.color);
+     }
+     pointPub.publish(points);
+
+
   }
 
   // Process the incoming laser scan message
