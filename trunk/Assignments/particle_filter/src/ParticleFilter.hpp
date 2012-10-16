@@ -14,11 +14,27 @@ class MyLocaliser: public MCLocaliser
 {
 public:
 
-    MyLocaliser( int particleCount = 100 ) : MCLocaliser(particleCount), sizeD(particleCount) { distances = new double[particleCount]; }
-    virtual ~MyLocaliser(){ delete distances; }
+    static const int WEIGHTS_LENGTH = 6;
 
-    int sizeD;
-    double* distances;
+    MyLocaliser( int particleCount = 100 ) : MCLocaliser(particleCount), key(0) {
+
+        distances = new double*[WEIGHTS_LENGTH];
+
+        for( int i = 0 ; i < WEIGHTS_LENGTH ; ++i ){
+            weights[i] = 1 - (i*0.1);
+            distances[i] = new double[particleCount];
+        }
+    }
+    virtual ~MyLocaliser(){
+        for( int i = 0 ; i < WEIGHTS_LENGTH ; ++i ){
+            delete distances[i];
+        }
+        delete distances;
+    }
+
+    int key;
+    double** distances;
+    double weights[WEIGHTS_LENGTH];
 
  /**  
   * Just place all particles on a line along x=y. This should be
