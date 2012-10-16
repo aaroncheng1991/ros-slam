@@ -2,7 +2,7 @@
 #include <vector>
 #include "ros/console.h"
 namespace wfd {
-    const int operations[4][2] = {{1,0}, {-1,0}, {0,1}, {0,-1}};
+    const int operations[8][2] = {{1,0}, {-1,0}, {0,1}, {0,-1},{1,1},{-1,1},{1,-1},{-1,-1}};
 
     WaveFrontierDetector::WaveFrontierDetector(const nav_msgs::OccupancyGrid::ConstPtr& map)
     {
@@ -38,31 +38,30 @@ namespace wfd {
     }
 
     bool WaveFrontierDetector::isUnexplored(int x, int y) {
-        int width = this->map->info.height;
+        int width = this->map->info.width;
         return (this->map->data[y*width+x]) == -1;
     }
 
     bool WaveFrontierDetector::isFrontier(_pose pose) {
         // a point is a frontier, when one neighbour of that point has unexplored regions, but there have to be also explored neighbours
         bool unexplored = false;
-        bool explored = false;
-        for(unsigned int i = 0 ; i < 4 ; ++i) {
+
+        for(unsigned int i = 0 ; i < 8 ; ++i) {
             int nx = pose.x + (operations[i][0]);
             int ny = pose.y + (operations[i][1]);
             if(allowed(nx, ny)) {
                 if(isUnexplored(nx, ny)) {
                     unexplored = true;
-                } else {
-                    explored = true;
                 }
             }
         }
-        return unexplored && explored;
+        int width = this->map->info.width;
+        return unexplored &&  this->map->data[pose.y*width+pose.x] == 0;
     }
 
     std::vector<_pose> WaveFrontierDetector::adj(_pose pose) {
         std::vector<_pose> poses;
-        for(unsigned int i = 0 ; i < 4 ; ++i) {
+        for(unsigned int i = 0 ; i < 8 ; ++i) {
             int nx = pose.x + (operations[i][0]);
             int ny = pose.y + (operations[i][1]);
             _pose npose;
@@ -82,10 +81,9 @@ namespace wfd {
     bool WaveFrontierDetector::hasOpenSpaceNeighbor(_pose pose) {
         // one neighbour with no obstacles
         int width = this->map->info.width;
-        float x = pose.x;
-        float y = pose.y;
-        for(unsigned int i = 0 ; i < 4 ; ++i) {
-            if(allowed(x, y) && this->map->data[y*width+x] < 5) return true;
+        std::vector<_pose> adja = adj(pose);
+        for(unsigned int i = 0 ; i < adja.size() ; ++i) {
+            if(this->map->data[adja[i].y*width+adja[i].x]==0) return true;
         }
         return false;
     }
