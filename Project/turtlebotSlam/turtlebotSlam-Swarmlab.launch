@@ -35,7 +35,7 @@
     <param name="ymin" value="-50.0"/>
     <param name="xmax" value="50.0"/>
     <param name="ymax" value="50.0"/>
-    <param name="delta" value="0.05"/>
+    <param name="delta" value="0.03"/>
     <param name="llsamplerange" value="0.01"/>
     <param name="llsamplestep" value="0.01"/>
     <param name="lasamplerange" value="0.005"/>
@@ -44,10 +44,11 @@
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen">
     <param name="footprint_padding" value="0.01"/>
+    <param name="planner_patience " value="1.0"/>
     <param name="controller_frequency" value="10.0"/>
-    <param name="controller_patience" value="3.0"/>
-    <param name="oscillation_timeout" value="30.0"/>
-    <param name="oscillation_distance" value="0.5"/>
+    <param name="controller_patience" value="1.0"/>
+    <param name="oscillation_timeout" value="2.0"/>
+    <param name="oscillation_distance" value="1.0"/>
     <!--
       <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
     -->
