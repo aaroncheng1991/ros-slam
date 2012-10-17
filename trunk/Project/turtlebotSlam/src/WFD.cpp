@@ -41,6 +41,7 @@ public:
         laserSub = nh.subscribe("base_scan", 1, &WFD::commandCallback, this);
         mapSub = nh.subscribe("map", 1, &WFD::mapCallback, this);
         odomSub = nh.subscribe("odom", 1, &WFD::odomCallback, this);
+        goalPub = nh.advertise<move_base_msgs::MoveBaseGoal>("goal", 1);
         hasMap = false;
     }
 
@@ -89,11 +90,9 @@ public:
         std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
 
         double dist = DBL_MIN;
-        changedDest=false;
         ROS_ERROR("Distance between destination and robot: %f", distance(destination, pose));
         if(distance(destination, pose) < 0.1 || (destination.x==0 && destination.y==0)){
             ROS_ERROR("Setting changedDest to true");
-            changedDest=true;
             for(unsigned int i = 0; i < frontiers.size(); i++){
                 double d = distance(frontiers[i], pose);
                 if(d > dist && msg->data[frontiers[i].y*mapSize[0]+frontiers[i].x] !=-1){
@@ -149,21 +148,14 @@ public:
 
         goalPoint.points.push_back(p);
         goalPoint.colors.push_back(goalPoint.color);
-ROS_ERROR("second publish");
+        ROS_ERROR("second publish");
         goalPointPub.publish(goalPoint);
-
-        if(changedDest){
-            ROS_ERROR("Setting new goal in life");
-            simpleMove(destination);
-        }
+        ROS_ERROR("Setting new goal in life");
+        simpleMove(destination);
     }
 
     void simpleMove(wfd::_pose pose){
-
-        MoveBaseClient ac("move_base", true);
-        while(!ac.waitForServer(ros::Duration(5.0))){
-
-        }
+        // publish the goal
         /*
 geometry_msgs::TransformStamped geoTransform;
 try {
@@ -185,7 +177,7 @@ catch(tf::TransformException &exception) {
         goal.target_pose.pose.position.x=(pose.x - mapSize[0]/2) * mapResolution; //convergence from occupancygrid indexes to map coordinates
         goal.target_pose.pose.position.y=(pose.y - mapSize[1]/2) * mapResolution;
         goal.target_pose.pose.orientation.w = 1.0;
-        ac.sendGoal(goal);
+        goalPub.publish(goal);
         //      ac.waitForResult();
     }
 
@@ -231,6 +223,7 @@ catch(tf::TransformException &exception) {
 
 protected:
     ros::Publisher commandPub; // Publisher to the simulated robot's velocity command topic
+    ros::Publisher goalPub;
     ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic
     ros::Subscriber mapSub;  //Subscriber to the gmapping map topic
     ros::Subscriber odomSub; //subscriber for the odom topic
@@ -251,7 +244,6 @@ protected:
     ros::Duration rotateDuration; // Duration of the rotation
     nav_msgs::OccupancyGrid::ConstPtr map;
     bool hasMap;
-    bool changedDest;
     typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 };
 
