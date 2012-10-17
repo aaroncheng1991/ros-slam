@@ -4,3 +4,4 @@
  inflation_radius: 1.0
  observation_sources: scan
  scan: {data_type: LaserScan, topic: /scan, marking: true, clearing: true}
+ transform_tolerance: 0.4
