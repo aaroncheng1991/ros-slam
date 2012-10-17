@@ -16,18 +16,22 @@ Marker.Enabled=1
 Marker.Marker\ Topic=visualization_marker
 Marker.Queue\ Size=100
 Marker.turtlebotSlam=1
+Marker2.Enabled=1
+Marker2.Marker\ Topic=/goal_marker
+Marker2.Queue\ Size=100
+Marker2.turtlebotSlam=1
 Odometry.Angle\ Tolerance=0.1
 Odometry.ColorB=0
 Odometry.ColorG=0.1
 Odometry.ColorR=1
-Odometry.Enabled=1
+Odometry.Enabled=0
 Odometry.Keep=100
 Odometry.Length=1
 Odometry.Position\ Tolerance=0.1
 Odometry.Topic=/odom
-Property\ Grid\ Splitter=619,78
-Property\ Grid\ State=expanded=.Global Options,.Global Status,Map.Enabled,Axes.Enabled,Odometry.Enabled,Odometry.Status,TF.Enabled,TF.Frames,TF.Frames./base_footprint,TF.Frames./base_laser_link,TF.Frames./base_link,TF.Frames./map,TF.Frames./odom,Marker.Enabled,Marker.Namespaces;splitterratio=0.5
-QMainWindow=000000ff00000000fd0000000300000000000001c70000030bfc0200000001fb000000100044006900730070006c006100790073010000001d0000030b000000ee00ffffff00000001000001310000030bfc0200000003fb0000001e0054006f006f006c002000500072006f0070006500720074006900650073010000001d000000c90000006700fffffffb0000000a0056006900650077007301000000ec0000016d000000bb00fffffffb0000001200530065006c0065006300740069006f006e010000025f000000c90000006700ffffff000000030000055f0000003efc0100000001fb0000000800540069006d006501000000000000055f000002bf00ffffff0000025b0000030b00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+Property\ Grid\ Splitter=655,78
+Property\ Grid\ State=expanded=.Global Options,.Global Status,Map.Enabled,Axes.Enabled,Odometry.Enabled,TF.Enabled,TF.Frames,TF.Frames./base_footprint,TF.Frames./base_laser_link,TF.Frames./base_link,TF.Frames./map,TF.Frames./odom,Marker.Enabled,Marker2.Enabled;splitterratio=0.5
+QMainWindow=000000ff00000000fd0000000300000000000001c70000032ffc0200000001fb000000100044006900730070006c006100790073010000001d0000032f000000ee00ffffff00000001000001310000032ffc0200000003fb0000001e0054006f006f006c002000500072006f0070006500720074006900650073010000001d000000d20000006700fffffffb0000000a0056006900650077007301000000f50000017f000000bb00fffffffb0000001200530065006c0065006300740069006f006e010000027a000000d20000006700ffffff000000030000056f0000003efc0100000001fb0000000800540069006d006501000000000000056f000002bf00ffffff0000026b0000032f00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
 TF.All\ Enabled=0
 TF.Enabled=1
 TF.Frame\ Timeout=15
@@ -54,6 +58,9 @@ Name=TF
 [Display4]
 ClassName=rviz::MarkerDisplay
 Name=Marker
+[Display5]
+ClassName=rviz::MarkerDisplay
+Name=Marker2
 [TF.Frames.]
 base_footprint.Enabled=1
 base_laser_link.Enabled=1
@@ -61,7 +68,7 @@ base_link.Enabled=1
 map.Enabled=1
 odom.Enabled=1
 [Window]
-Height=876
-Width=1375
-X=7
+Height=948
+Width=1407
+X=-7
 Y=0

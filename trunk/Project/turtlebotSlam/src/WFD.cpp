@@ -14,7 +14,8 @@
 #include <cmath>
 #include <ostream>
 #include <fstream>
-
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
 #include "turtlebotSlam/wavefrontierdetector.h"
 
 
@@ -27,18 +28,21 @@ public:
         fsm(FSM_MOVE_FORWARD),rotateStartTime(ros::Time::now()),rotateDuration(0.f) {
         // Initialize random time generator
         srand(time(NULL));
+
+
         // Advertise a new publisher for the simulated robot's velocity command topic
         // (the second argument indicates that if multiple command messages are in
         //  the queue to be sent, only the last command will be sent)
         commandPub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
         pointPub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+        goalPointPub  = nh.advertise<visualization_msgs::Marker>("goal_marker", 10);
         // Subscribe to the simulated robot's laser scan topic and tell ROS to call
         // this->commandCallback() whenever a new message is published on that topic
         laserSub = nh.subscribe("base_scan", 1, &WFD::commandCallback, this);
         mapSub = nh.subscribe("map", 1, &WFD::mapCallback, this);
         odomSub = nh.subscribe("odom", 1, &WFD::odomCallback, this);
         hasMap = false;
-    };
+    }
 
     // Send a velocity command
     void move(double linearVelMPS, double angularVelRadPS) {
@@ -46,7 +50,8 @@ public:
         msg.linear.x = linearVelMPS;
         msg.angular.z = angularVelRadPS;
         //    commandPub.publish(msg);
-    };
+    }
+
 
     void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
         try {
@@ -68,8 +73,6 @@ public:
     }
 
     void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg){
-        ROS_ERROR("STARTING WFD");
-
         this->map = msg;
         hasMap = true;
         mapSize[0] = msg->info.width;
@@ -81,11 +84,25 @@ public:
         pose.y = robot_pos[1];
 
         if(!hasMap || std::isnan(pose.x) || std::isnan(pose.y) || pose.x < 0 || pose.x >= map->info.width || pose.y < 0 || pose.y >= map->info.height) return;
+
         wfd::WaveFrontierDetector frontierDetector(map);
         std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
 
-        ROS_ERROR("MID WFD");
-
+        double dist = DBL_MIN;
+        changedDest=false;
+        ROS_ERROR("Distance between destination and robot: %f", distance(destination, pose));
+        if(distance(destination, pose) < 0.1 || (destination.x==0 && destination.y==0)){
+            ROS_ERROR("Setting changedDest to true");
+            changedDest=true;
+            for(unsigned int i = 0; i < frontiers.size(); i++){
+                double d = distance(frontiers[i], pose);
+                if(d > dist && msg->data[frontiers[i].y*mapSize[0]+frontiers[i].x] !=-1){
+                    dist = d;
+                    destination = frontiers[i];
+                }
+            }
+        }
+         ROS_ERROR("Starting visualisation");
         // visualization
         visualization_msgs::Marker points;
         points.header.stamp = ros::Time::now();
@@ -99,7 +116,6 @@ public:
         points.scale.y = 0.8;
         points.color.g = 1.0f;
         points.color.a = 0.01;
-
         for(unsigned int i = 0 ; i < frontiers.size() ; ++i) {
             geometry_msgs::Point p;
             p.x = (frontiers[i].x - mapSize[0]/2) * mapResolution;
@@ -109,9 +125,73 @@ public:
             points.points.push_back(p);
             points.colors.push_back(points.color);
         }
+         ROS_ERROR("First publish");
         pointPub.publish(points);
+        visualization_msgs::Marker goalPoint;
+        goalPoint.header.stamp = ros::Time::now();
+        goalPoint.header.frame_id = "/map";
+        goalPoint.ns = "turtlebotSlam";
+        goalPoint.pose.orientation.w = 1.0;
+        goalPoint.action = visualization_msgs::Marker::ADD;
+        goalPoint.id = 0;
+        goalPoint.type = visualization_msgs::Marker::POINTS;
+        goalPoint.scale.x = 0.2;
+        goalPoint.scale.y = 0.2;
+        goalPoint.color.b = 1.0f;
+        goalPoint.color.a = 1.0;
 
-        ROS_ERROR("PUBLISHED WFD");
+        geometry_msgs::Point p;
+        p.x = (destination.x - mapSize[0]/2) * mapResolution;
+        p.y= (destination.y - mapSize[1]/2) * mapResolution;
+        p.z = 0;
+
+        ROS_ERROR("p.x: %f p.y: %f", p.x, p.y);
+
+        goalPoint.points.push_back(p);
+        goalPoint.colors.push_back(goalPoint.color);
+ROS_ERROR("second publish");
+        goalPointPub.publish(goalPoint);
+
+        if(changedDest){
+            ROS_ERROR("Setting new goal in life");
+            simpleMove(destination);
+        }
+    }
+
+    void simpleMove(wfd::_pose pose){
+
+        MoveBaseClient ac("move_base", true);
+        while(!ac.waitForServer(ros::Duration(5.0))){
+
+        }
+        /*
+geometry_msgs::TransformStamped geoTransform;
+try {
+    listener.lookupTransform("map",
+                             "base_link",
+                             ros::Time(0),
+                             tfTransform);
+}
+catch(tf::TransformException &exception) {
+    ROS_ERROR("%s", exception.what());
+}
+
+      geoTransform.transform.translation.x = tfTransform.getOrigin().x();
+      geoTransform.transform.translation.y = tfTransform.getOrigin().y();
+*/
+        move_base_msgs::MoveBaseGoal goal;
+        goal.target_pose.header.frame_id = "/map";
+        goal.target_pose.header.stamp = ros::Time::now();
+        goal.target_pose.pose.position.x=(pose.x - mapSize[0]/2) * mapResolution; //convergence from occupancygrid indexes to map coordinates
+        goal.target_pose.pose.position.y=(pose.y - mapSize[1]/2) * mapResolution;
+        goal.target_pose.pose.orientation.w = 1.0;
+        ac.sendGoal(goal);
+        //      ac.waitForResult();
+    }
+
+    //Euclidean distance
+    double distance(wfd::_pose pose1,wfd::_pose pose2){
+        return sqrt(pow(pose1.x-pose2.x,2) + pow(pose1.y-pose2.y,2));
     }
 
     // Process the incoming laser scan message
@@ -155,10 +235,14 @@ protected:
     ros::Subscriber mapSub;  //Subscriber to the gmapping map topic
     ros::Subscriber odomSub; //subscriber for the odom topic
     ros::Publisher pointPub;
+    ros::Publisher goalPointPub;
     tf::StampedTransform tfMap;
     tf::Vector3 origin;
     tf::Quaternion rotation;
+    tf::TransformListener listener;
+    tf::StampedTransform tfTransform;
     ros::Timer timer;
+    wfd::_pose destination;
     double robot_pos[3];
     int mapSize[2];
     float mapResolution;
@@ -167,6 +251,8 @@ protected:
     ros::Duration rotateDuration; // Duration of the rotation
     nav_msgs::OccupancyGrid::ConstPtr map;
     bool hasMap;
+    bool changedDest;
+    typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 };
 
 int main(int argc, char **argv) {
