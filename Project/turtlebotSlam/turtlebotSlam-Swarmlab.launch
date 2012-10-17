@@ -1,6 +1,6 @@
 <launch>  
 
- 
+  <param name="use_sim_time" type="bool" value="true" />
   <node pkg="stage" type="stageros" name="stageros" args="$(find turtlebotSlam)/world/swarmlab_single_turtle.world" respawn="false" output="screen" />
       <!--
         <node name="map_server" pkg="map_server" type="map_server" args="$(find turtlebotSlam)/world/swarmlab_map.yaml">
@@ -12,8 +12,8 @@
   <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
     <remap from="scan" to="base_scan"/>
     <param name="odom_frame" value="odom"/>
-    <param name="map_update_interval" value="30.0"/>
-    <param name="maxUrange" value="16.0"/>
+    <param name="map_update_interval" value="3.0"/>
+    <param name="maxUrange" value="80.0"/>
     <param name="sigma" value="0.05"/>
     <param name="kernelSize" value="1"/>
     <param name="lstep" value="0.05"/>
@@ -43,8 +43,10 @@
   </node>
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen">
-    <param name="footprint_padding" value="0.01"/><param name="controller_frequency" value="10.0"/>
-    <param name="controller_patience" value="3.0"/><param name="oscillation_timeout" value="30.0"/>
+    <param name="footprint_padding" value="0.01"/>
+    <param name="controller_frequency" value="10.0"/>
+    <param name="controller_patience" value="3.0"/>
+    <param name="oscillation_timeout" value="30.0"/>
     <param name="oscillation_distance" value="0.5"/>
     <!--
       <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
