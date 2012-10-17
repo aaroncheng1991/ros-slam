@@ -60,5 +60,6 @@
         <rosparam file="$(find navigation_stage)/move_base_config/dwa_local_planner_params.yaml" command="load" />
     -->
   </node>
+  <node pkg="frontier_navigation" type="frontier_navigation" name="frontier_navigation"/>
 
 </launch>
