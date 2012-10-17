@@ -15,7 +15,7 @@ class MyLocaliser: public MCLocaliser
 {
 public:
 
-    static const int WEIGHTS_LENGTH = 15, SKIP_SCANS = 10, PARTICLE_RESAMPLING_KEEP=20;
+    static const int WEIGHTS_LENGTH = 5, SKIP_SCANS = 3, PARTICLE_RESAMPLING_KEEP=25;
 
     MyLocaliser( int particleCount = 100 ) : MCLocaliser(particleCount), key(0), skippedScans(0), scanCounter(0), resampleCounter(0), motOffset(2.0) {
 
@@ -88,6 +88,7 @@ protected:
        int particleCount = this->particleCloud.poses.size();
        std::vector<ValuePose> keep;
 
+       // Create intermediary datastructure used to sort (Probably could have used a functor object... :-/)
         for(int i=0;i<particleCount;++i){
             if(validScans[key][i]){
 
@@ -107,16 +108,25 @@ protected:
                     keep.push_back(ValuePose(particleCloud.poses[i], dist));
                 }
             }
+
+            // Reset sampling wheel
+            for(int k = 0; k < WEIGHTS_LENGTH ; ++k){
+                prob[k][i] = 1;
+            }
         }
 
+        // Sort on pose probability
         std::sort(keep.begin(), keep.end());
 
+        // Gather X best particles
         for(int i = 0 ; i < PARTICLE_RESAMPLING_KEEP ; ++i){
             particleCloud.poses[i] = keep[i].pose;
         }
 
+        // The rest of the particles (PARTICLES - X) are reset with a diminishing noise around the X best poses
         int remaining = particleCount - PARTICLE_RESAMPLING_KEEP;
-        motOffset /= 2.0;
+
+        motOffset *= 0.6;   // Converge
 
         boost::normal_distribution<> posDistr(0,motOffset);
         boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varPos(rng, posDistr);
@@ -134,8 +144,7 @@ protected:
             particleCloud.poses[i].orientation = tf::createQuaternionMsgFromYaw(  tf::getYaw(pose.orientation) + varRot());
         }
 
-        // TODO: Reset sampling wheel
-        ROS_ERROR("Resampling done");
+        ROS_ERROR("Resampling done; best found:  %f", keep[0].val);
     }
 
     /**
