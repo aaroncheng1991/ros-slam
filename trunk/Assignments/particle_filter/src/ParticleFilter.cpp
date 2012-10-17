@@ -19,6 +19,7 @@
   */
 void MyLocaliser::initialisePF( const geometry_msgs::PoseWithCovarianceStamped& initialpose )
 {
+    motOffset = 1.5;
     double xR = initialpose.pose.pose.position.x,
             yR = initialpose.pose.pose.position.y,
             tR = tf::getYaw(initialpose.pose.pose.orientation);
@@ -38,6 +39,11 @@ void MyLocaliser::initialisePF( const geometry_msgs::PoseWithCovarianceStamped& 
         particleCloud.poses[i].position.y = yR +  varY();
         geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw( tR + varO());
         particleCloud.poses[i].orientation = odom_quat;
+
+        // Reset sampling wheel
+        for(int k = 0; k < WEIGHTS_LENGTH ; ++k){
+            prob[k][i] = 1;
+        }
     }
 }
 
@@ -50,25 +56,17 @@ void MyLocaliser::initialisePF( const geometry_msgs::PoseWithCovarianceStamped& 
    */
 void MyLocaliser::applyMotionModel( double dRX, double dRY, double dRT )
 {
-    // Y U NO GIVE ME WORKING CODE SHRIEK?
-    // First: dRX, dRY are vectors in free space => I could cheat and just get the robots orientation from this
-    // Second: dRT jumps when it goes from OoB at a higher level [-PI, PI] and gives me a 2*PI - real DRT, -2*PI + real DRT relatively.
+    // Problems with input from this function:
+    // 1) dRX, dRY are vectors in free space => I could cheat and just get the robots orientation from this
+    // 2) dRT jumps when it goes from OoB at a higher level [-PI, PI] and gives me a 2*PI - real DRT, -2*PI + real DRT relatively.
     //          My apologies for the following sanitization policy which will prohibit the code from working on DRT outside of bounds  [-PI, PI].
-
-    //if (dRX != 0 or dRY != 0 or dRT != 0)
-        //ROS_ERROR("Before sanitization: %f",dRT);
+    //          Also; the code will not work for a robot driving backwards; as this information is not available to us without access to the robot itself.
 
     dRT = dRT < -M_PI ? dRT + (2*M_PI) : dRT;  // If smaller than -PI, real dRT is positive
     dRT = dRT > M_PI ? dRT - (2*M_PI) : dRT;  // If larger than PI, real dRT is negative
 
-    //if (dRX != 0 or dRY != 0 or dRT != 0)
-        //ROS_ERROR("After sanitization: %f::%f -- %f = %f = %f",dRX, dRY, atan2(dRY,dRX), sin(atan2(dRY,dRX)), cos(atan2(dRY,dRX)));
-        //ROS_ERROR("A: %f",dRT);
-
-    // Not used as local variables for prototyping; will refactor if performance requires it.
-
     if (dRX != 0 or dRY != 0 or dRT != 0){
-        ++skippedScans;
+        ++skippedScans;     // increment the skip scanner; new data is available
 
         // As it is more realistic to model noise on the distance travelled and the delta orientation
         double orientation = dRT, distance = sqrt((dRX*dRX) + (dRY*dRY));
@@ -88,7 +86,6 @@ void MyLocaliser::applyMotionModel( double dRX, double dRY, double dRT )
         {
             double dP = distance + varP();
             double dT = orientation + varT();
-
 
             double theta = tf::getYaw(particleCloud.poses[i].orientation) + dT; // Quaternion creation handles rotation sanitization
 
@@ -176,6 +173,7 @@ void MyLocaliser::applySensorModel( const sensor_msgs::LaserScan& scan )
         double dist = 0;
         double sumDistSim = 0, sumDistReal = 0;
 
+        // Pearson product moment correlation coefficient
         for(unsigned int k = 0; k < simulatedScan->ranges.size(); ++k){
             double normSimObs = simulatedScan->ranges[k]/maxS,    // normalize the random variable X
                     normRealObs = scan.ranges[k]/maxR;            // normalize the random variable Y
@@ -193,15 +191,6 @@ void MyLocaliser::applySensorModel( const sensor_msgs::LaserScan& scan )
         double Pearson_product_moment_correlation_coefficient = fabs( dist / sigmaXY );
 
         prob[key][i] = 1.0f - Pearson_product_moment_correlation_coefficient;
-
-        //ROS_ERROR("B: %f", distances[key][i]);
-
-        //if (i == 0)
-        //{
-        //  for (unsigned int k = 0; k < simulatedScan->ranges.size(); ++k)
-        //    ROS_INFO_STREAM(simulatedScan->ranges[k]);
-        //  std::cerr << "\n\n";
-        //}
     }
 
     key = (key+1)%WEIGHTS_LENGTH;
