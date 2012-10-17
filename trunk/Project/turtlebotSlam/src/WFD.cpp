@@ -1,23 +1,27 @@
-#include "ros/ros.h"
-#include "ros/console.h"
+
+#include <actionlib/client/simple_action_client.h>
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <cmath>
+#include <cstdlib> // Needed for rand()
+#include <ctime> // Needed to seed random number generator with a time value
+#include <fstream>
 #include "geometry_msgs/Twist.h"
-#include "sensor_msgs/LaserScan.h"
+#include <geometry_msgs/PoseStamped.h>
+#include <iostream>
+#include <move_base_msgs/MoveBaseAction.h>
 #include "nav_msgs/OccupancyGrid.h"
 #include "nav_msgs/Odometry.h"
+#include <nav_msgs/GetPlan.h>
+#include <ostream>
+#include "ros/ros.h"
+#include "ros/console.h"
+#include "sensor_msgs/LaserScan.h"
 #include "tf/tfMessage.h"
 #include "tf/transform_listener.h"
 #include "tf/transform_broadcaster.h"
-#include "visualization_msgs/Marker.h"
-#include <cstdlib> // Needed for rand()
-#include <iostream>
-#include <ctime> // Needed to seed random number generator with a time value
-#include <cmath>
-#include <ostream>
-#include <fstream>
-#include <move_base_msgs/MoveBaseAction.h>
-#include <actionlib/client/simple_action_client.h>
 #include "turtlebotSlam/wavefrontierdetector.h"
-
+#include "visualization_msgs/Marker.h"
 
 class WFD {
 
@@ -89,18 +93,33 @@ public:
         wfd::WaveFrontierDetector frontierDetector(map);
         std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
 
-        double dist = DBL_MIN;
+        changedDest=false;
         ROS_ERROR("Distance between destination and robot: %f", distance(destination, pose));
-        if(distance(destination, pose) < 0.1 || (destination.x==0 && destination.y==0)){
-            ROS_ERROR("Setting changedDest to true");
-            for(unsigned int i = 0; i < frontiers.size(); i++){
-                double d = distance(frontiers[i], pose);
-                if(d > dist && msg->data[frontiers[i].y*mapSize[0]+frontiers[i].x] !=-1){
-                    dist = d;
-                    destination = frontiers[i];
-                }
-            }
+        bool cDist = distance(destination, pose) < 100,
+                cNull = (destination.x==0 && destination.y==0),
+                cStillFrontier = std::find_if(frontiers.begin(), frontiers.end(), wfd::same_pose(destination)) == frontiers.end();
+
+        if( noPath
+                || cDist   // check if in range of destination
+                || cNull   // check if destination valid
+                || cStillFrontier ){ // check if still a frontier
+
+            ROS_ERROR("==============");
+            ROS_ERROR("RESETTING PATH BECAUSE: %d, %d, %d, %d", noPath, cDist, cNull, cStillFrontier);
+            ROS_ERROR("==============");
+
+            changedDest=true;
+
+            MoveBaseClient ac("move_base", true);
+            while(!ac.waitForServer(ros::Duration(1.0))){}
+
+            ac.cancelAllGoals();
+
+            lastFoundFrontiers = frontierDetector.sortFrontiers(wfd::DIST_ROBOT, pose.x, pose.y);
+
+           selectNewDestination();
         }
+
          ROS_ERROR("Starting visualisation");
         // visualization
         visualization_msgs::Marker points;
@@ -126,6 +145,94 @@ public:
         }
          ROS_ERROR("First publish");
         pointPub.publish(points);
+
+        if(changedDest){
+            ROS_ERROR("Setting new goal in life");
+            simpleMove(destination);
+        }
+    }
+
+    void selectNewDestination(){
+        if(!lastFoundFrontiers.empty()){
+            int sSize = lastFoundFrontiers.size();
+            double stdDev = sSize * 0.33;
+            boost::normal_distribution<> oDistr(0,stdDev);
+            boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varO(rng, oDistr);
+
+            double v = varO();
+            int k = abs(int(v));
+            destination = lastFoundFrontiers[k % sSize].pos;
+            ROS_ERROR("Selected new destination: %f - %d :: %f-%f", v, k % sSize, destination.x, destination.y);
+        } else {
+            ROS_ERROR("last found frontiers was empty!");
+        }
+    }
+
+    void simpleMove(wfd::_pose pose){
+
+        ROS_ERROR("Trying the given destination");
+
+        ros::NodeHandle n;
+        ros::ServiceClient client = n.serviceClient<nav_msgs::GetPlan>("/move_base_node/make_plan");
+        nav_msgs::GetPlan srv;
+
+        geometry_msgs::PoseStamped start_pose, goal_pose;
+
+        tf::Quaternion q = tf::createQuaternionFromYaw(robot_pos[2]);
+
+        int tries = 50;
+        bool found = false;
+        do{
+            ROS_ERROR("Trying to find path");
+
+            --tries;
+            start_pose.header.frame_id = "/map";
+            start_pose.pose.position.x=(robot_pos[0] - mapSize[0]/2) * mapResolution; //convergence from occupancygrid indexes to map coordinates
+            start_pose.pose.position.y=(robot_pos[1] - mapSize[1]/2) * mapResolution;
+            start_pose.pose.orientation.w = q.getW();
+
+            goal_pose.header.frame_id = "/map";
+            goal_pose.pose.position.x=(pose.x - mapSize[0]/2) * mapResolution; //convergence from occupancygrid indexes to map coordinates
+            goal_pose.pose.position.y=(pose.y - mapSize[1]/2) * mapResolution;
+            goal_pose.pose.orientation.w = q.getW();
+
+            srv.request.start = start_pose;
+            srv.request.goal = goal_pose;
+
+            found = false;
+
+            if (client.call(srv)){
+                if (srv.response.plan.poses.size() == 0) {
+                    ROS_ERROR("... no plan found TRYING DIFFERENT!");
+
+                    selectNewDestination();
+                    pose = destination;
+                } else {
+                    found = true;
+                    ROS_ERROR("... found a plan!");
+                }
+            } else {
+                ROS_ERROR("... no communication so returning (We're still moving)!");
+                return;
+            }
+        } while(!found && tries >= 0);
+
+        if(!found){
+            noPath = true;
+            ROS_ERROR("... no goal found!");
+            return;
+        }
+
+        MoveBaseClient ac("move_base", true);
+        while(!ac.waitForServer(ros::Duration(1.0))){}
+
+        move_base_msgs::MoveBaseGoal goal;
+        goal.target_pose.header.frame_id = "/map";
+        goal.target_pose.header.stamp = ros::Time::now();
+        goal.target_pose.pose.position.x=(pose.x - mapSize[0]/2) * mapResolution; //convergence from occupancygrid indexes to map coordinates
+        goal.target_pose.pose.position.y=(pose.y - mapSize[1]/2) * mapResolution;
+        goal.target_pose.pose.orientation.w = 1.0;
+
         visualization_msgs::Marker goalPoint;
         goalPoint.header.stamp = ros::Time::now();
         goalPoint.header.frame_id = "/map";
@@ -150,35 +257,8 @@ public:
         goalPoint.colors.push_back(goalPoint.color);
         ROS_ERROR("second publish");
         goalPointPub.publish(goalPoint);
-        ROS_ERROR("Setting new goal in life");
-        simpleMove(destination);
-    }
 
-    void simpleMove(wfd::_pose pose){
-        // publish the goal
-        /*
-geometry_msgs::TransformStamped geoTransform;
-try {
-    listener.lookupTransform("map",
-                             "base_link",
-                             ros::Time(0),
-                             tfTransform);
-}
-catch(tf::TransformException &exception) {
-    ROS_ERROR("%s", exception.what());
-}
-
-      geoTransform.transform.translation.x = tfTransform.getOrigin().x();
-      geoTransform.transform.translation.y = tfTransform.getOrigin().y();
-*/
-        move_base_msgs::MoveBaseGoal goal;
-        goal.target_pose.header.frame_id = "/map";
-        goal.target_pose.header.stamp = ros::Time::now();
-        goal.target_pose.pose.position.x=(pose.x - mapSize[0]/2) * mapResolution; //convergence from occupancygrid indexes to map coordinates
-        goal.target_pose.pose.position.y=(pose.y - mapSize[1]/2) * mapResolution;
-        goal.target_pose.pose.orientation.w = 1.0;
         goalPub.publish(goal);
-        //      ac.waitForResult();
     }
 
     //Euclidean distance
@@ -235,6 +315,8 @@ protected:
     tf::TransformListener listener;
     tf::StampedTransform tfTransform;
     ros::Timer timer;
+    std::vector<wfd::ValuePose> lastFoundFrontiers;
+    boost::mt19937 rng;
     wfd::_pose destination;
     double robot_pos[3];
     int mapSize[2];
@@ -244,6 +326,7 @@ protected:
     ros::Duration rotateDuration; // Duration of the rotation
     nav_msgs::OccupancyGrid::ConstPtr map;
     bool hasMap;
+    bool changedDest, noPath;
     typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 };
 

@@ -140,12 +140,11 @@ namespace wfd {
             setState(p, MAP_CLOSE_LIST);
         }
 
-        sortFrontiers(CUM_DIST);
-
         return this->frontiers;
     }
 
-    std::vector<ValuePose> WaveFrontierDetector::sortFrontiers(sorttype t){
+    // Location of robot as parameter
+    std::vector<ValuePose> WaveFrontierDetector::sortFrontiers(sorttype t, double rX, double rY){
         std::vector<ValuePose> list;
         int s = frontiers.size();
 
@@ -154,8 +153,15 @@ namespace wfd {
         }
 
         switch(t){
-            case CUM_DIST : {
-                ROS_ERROR("CUMMING");
+            case DIST_ROBOT : {
+                for(int i = 0; i < s; i++){
+                    _pose lhs = frontiers[i];
+                    double dist = WaveFrontierDetector::dist(lhs, rX,rY);
+
+                    list.push_back(ValuePose(lhs, dist));
+                }
+            }
+            case CUM_DIST_POSES : {
                     for(int i = 0; i < s; i++){
                         _pose lhs = frontiers[i];
                         double dist = 0;
@@ -174,10 +180,6 @@ namespace wfd {
         }
 
         std::sort(list.begin(), list.end());
-
-        for(int j = 0; j < 10; j++){
-            ROS_ERROR("POSE %d VALUE: %f", j, list[j].val);
-        }
 
         return list;
     }
