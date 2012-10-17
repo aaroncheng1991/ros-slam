@@ -14,6 +14,20 @@ namespace wfd {
         NONE
     };
 
+    enum sorttype {
+        CUM_DIST // you raff, you rose: Sorted on minimum Cumulated Distance to all other poses
+    };
+
+    struct ValuePose {
+
+        ValuePose(_pose p, double v) : pos(p), val(v) {}
+
+        _pose pos;
+        double val;
+
+        bool operator<(const ValuePose& rhs) const { return this->val < rhs.val; }
+    };
+
     class WaveFrontierDetector
     {
     private:
@@ -29,6 +43,8 @@ namespace wfd {
         bool allowed(int x, int y);
         wfdstate getState(_pose pose);
         void setState(_pose pose, wfdstate state);
+        std::vector<ValuePose> sortFrontiers(sorttype t);
+
     public:
         WaveFrontierDetector(const nav_msgs::OccupancyGrid::ConstPtr& map);
         ~WaveFrontierDetector();
@@ -39,6 +55,13 @@ namespace wfd {
          * pose is the actual pose of the robot
          **/
         std::vector<_pose> wfd(_pose pose);
+
+        // Distance based on 2D (X,Y) plane, disregarding _pose.z
+        static double dist(_pose& lhs, _pose& rhs){
+            double dX = lhs.x - rhs.x,
+                    dY = lhs.y - rhs.y;
+            return sqrt((dX*dX) + (dY*dY));
+        }
     };
 }
 #endif // WAVEFRONTIERDETECTOR_H
