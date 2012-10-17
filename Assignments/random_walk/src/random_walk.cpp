@@ -119,8 +119,8 @@ public:
   const static double MIN_SCAN_ANGLE_RAD = -20.0/180*M_PI;
   const static double MAX_SCAN_ANGLE_RAD = +20.0/180*M_PI;
   const static float PROXIMITY_RANGE_M = 0.75; // Should be smaller than sensor_msgs::LaserScan::range_max
-  const static double FORWARD_SPEED_MPS = 0.6;
-  const static double ROTATE_SPEED_RADPS = M_PI/2;
+  const static double FORWARD_SPEED_MPS = 0.06;
+  const static double ROTATE_SPEED_RADPS = M_PI/8;
 
 
 protected:
