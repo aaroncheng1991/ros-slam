@@ -16,7 +16,7 @@ namespace wfd {
 
     enum sorttype {
         DIST_ROBOT,
-        CUM_DIST_POSES // you raff, you rose: Sorted on minimum Cumulated Distance to all other poses
+        DENSEST_CLUSTER
     };
 
     struct ValuePose {
