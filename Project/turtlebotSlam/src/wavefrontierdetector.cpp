@@ -160,15 +160,16 @@ namespace wfd {
 
                     list.push_back(ValuePose(lhs, dist));
                 }
-            }
-            case CUM_DIST_POSES : {
+            }; break;
+            case DENSEST_CLUSTER : {
                     for(int i = 0; i < s; i++){
                         _pose lhs = frontiers[i];
                         double dist = 0;
 
                         for(int j = 0; j < s; j++){
                             if(i != j){
-                                dist += WaveFrontierDetector::dist(lhs, frontiers[j]);
+                                double distLoc = WaveFrontierDetector::dist(lhs, frontiers[j]);
+                                dist += distLoc < 20 ? -1 : 0;
                             }
                         }
 

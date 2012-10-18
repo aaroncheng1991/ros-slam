@@ -13,6 +13,7 @@
 #include "nav_msgs/OccupancyGrid.h"
 #include "nav_msgs/Odometry.h"
 #include <nav_msgs/GetPlan.h>
+#include "std_msgs/Int32.h"
 #include <ostream>
 #include "ros/ros.h"
 #include "ros/console.h"
@@ -45,6 +46,7 @@ public:
         laserSub = nh.subscribe("base_scan", 1, &WFD::commandCallback, this);
         mapSub = nh.subscribe("map", 1, &WFD::mapCallback, this);
         odomSub = nh.subscribe("odom", 1, &WFD::odomCallback, this);
+        goalSub = nh.subscribe("goalState", 1, &WFD::goalCallback, this);
         goalPub = nh.advertise<move_base_msgs::MoveBaseGoal>("goal", 1);
         hasMap = false;
     }
@@ -54,9 +56,21 @@ public:
         geometry_msgs::Twist msg; // The default constructor will set all commands to 0
         msg.linear.x = linearVelMPS;
         msg.angular.z = angularVelRadPS;
-        //    commandPub.publish(msg);
+        commandPub.publish(msg);
     }
 
+    void goalCallback(const std_msgs::Int32 goalState){
+        if(goalState.data == 0){
+            ROS_ERROR("A goal was accepted, so we are stopping");
+            fsm = FSM_STOP;
+        } else {
+          ROS_ERROR("The goal stopped being interesting for some reason");
+          fsm = FSM_ROTATE;
+#include "tf/transform_listener.h"
+          destination.x = 0;    // NULLING DESTINATION
+          destination.y = 0;
+      }
+    }
 
     void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
         try {
@@ -92,10 +106,11 @@ public:
 
         wfd::WaveFrontierDetector frontierDetector(map);
         std::vector<wfd::_pose> frontiers = frontierDetector.wfd(pose);
+        lastFoundFrontiers = frontierDetector.sortFrontiers(wfd::DIST_ROBOT, pose.x, pose.y);
 
         changedDest=false;
         ROS_ERROR("Distance between destination and robot: %f", distance(destination, pose));
-        bool cDist = distance(destination, pose) < 100,
+        bool cDist = distance(destination, pose) < 15,
                 cNull = (destination.x==0 && destination.y==0),
                 cStillFrontier = std::find_if(frontiers.begin(), frontiers.end(), wfd::same_pose(destination)) == frontiers.end();
 
@@ -109,18 +124,27 @@ public:
             ROS_ERROR("==============");
 
             changedDest=true;
+            noPath=false;
 
             MoveBaseClient ac("move_base", true);
             while(!ac.waitForServer(ros::Duration(1.0))){}
 
             ac.cancelAllGoals();
 
-            lastFoundFrontiers = frontierDetector.sortFrontiers(wfd::DIST_ROBOT, pose.x, pose.y);
-
-           selectNewDestination();
+            selectNewDestination();
         }
 
-         ROS_ERROR("Starting visualisation");
+        ROS_ERROR("Starting visualisation");
+
+        // Normalize the values in the sorted frontiers
+        double minV = DBL_MAX, maxV = DBL_MIN;
+        for(unsigned int i = 0 ; i < lastFoundFrontiers.size() ; ++i) {
+            double val = lastFoundFrontiers[i].val;
+            minV = val < minV ? val : minV;
+            maxV = val > maxV ? val : maxV;
+        }
+        double range = maxV - minV;
+
         // visualization
         visualization_msgs::Marker points;
         points.header.stamp = ros::Time::now();
@@ -130,23 +154,41 @@ public:
         points.action = visualization_msgs::Marker::ADD;
         points.id = 0;
         points.type = visualization_msgs::Marker::POINTS;
-        points.scale.x = 0.8;
-        points.scale.y = 0.8;
-        points.color.g = 1.0f;
-        points.color.a = 0.01;
-        for(unsigned int i = 0 ; i < frontiers.size() ; ++i) {
+        points.scale.x = mapResolution * 0.8f;
+        points.scale.y = mapResolution * 0.8f;
+        points.frame_locked=true;
+
+        points.color.r = 0.01f;
+        points.color.g = 0.01f;
+        points.color.b = 0.01f;
+        points.color.a = 1.0f;
+
+        for(unsigned int i = 0 ; i < lastFoundFrontiers.size() ; ++i) {
+            wfd::ValuePose pose = lastFoundFrontiers[i];
+
             geometry_msgs::Point p;
-            p.x = (frontiers[i].x - mapSize[0]/2) * mapResolution;
-            p.y= (frontiers[i].y - mapSize[1]/2) * mapResolution;
-            p.z = 0;
+            p.x = (pose.pos.x - mapSize[0]/2) * mapResolution - 7.5 * mapResolution;
+            p.y = (pose.pos.y - mapSize[1]/2) * mapResolution - 7.5 * mapResolution;
+            //p.x = (pose.pos.x - mapSize[0]/2) * mapResolution;
+           // p.y = (pose.pos.y - mapSize[1]/2) * mapResolution;
+            p.z = 0.0001;
+
+            double norm = (pose.val - minV) / range;
+            std_msgs::ColorRGBA color;
+
+            color.r = 1 - norm;
+            color.g = 0.0;
+            color.b = norm - 1;
+            color.a = 1.0;
 
             points.points.push_back(p);
-            points.colors.push_back(points.color);
+            points.colors.push_back(color);
         }
-         ROS_ERROR("First publish");
+
+        ROS_ERROR("Publishing Frontiers");
         pointPub.publish(points);
 
-        if(changedDest){
+        if(changedDest && !lastFoundFrontiers.empty()){
             ROS_ERROR("Setting new goal in life");
             simpleMove(destination);
         }
@@ -155,6 +197,7 @@ public:
     void selectNewDestination(){
         if(!lastFoundFrontiers.empty()){
             int sSize = lastFoundFrontiers.size();
+            sSize /= 5;
             double stdDev = sSize * 0.33;
             boost::normal_distribution<> oDistr(0,stdDev);
             boost::variate_generator<boost::mt19937&,boost::normal_distribution<> > varO(rng, oDistr);
@@ -180,7 +223,7 @@ public:
 
         tf::Quaternion q = tf::createQuaternionFromYaw(robot_pos[2]);
 
-        int tries = 50;
+        int tries = 100;
         bool found = false;
         do{
             ROS_ERROR("Trying to find path");
@@ -229,34 +272,65 @@ public:
         move_base_msgs::MoveBaseGoal goal;
         goal.target_pose.header.frame_id = "/map";
         goal.target_pose.header.stamp = ros::Time::now();
-        goal.target_pose.pose.position.x=(pose.x - mapSize[0]/2) * mapResolution; //convergence from occupancygrid indexes to map coordinates
-        goal.target_pose.pose.position.y=(pose.y - mapSize[1]/2) * mapResolution;
+        goal.target_pose.pose.position.x=(pose.x - mapSize[0]/2) * mapResolution  - 7.5 * mapResolution; //convergence from occupancygrid indexes to map coordinates
+        goal.target_pose.pose.position.y=(pose.y - mapSize[1]/2) * mapResolution  - 7.5 * mapResolution;
         goal.target_pose.pose.orientation.w = 1.0;
 
-        visualization_msgs::Marker goalPoint;
-        goalPoint.header.stamp = ros::Time::now();
-        goalPoint.header.frame_id = "/map";
-        goalPoint.ns = "turtlebotSlam";
-        goalPoint.pose.orientation.w = 1.0;
-        goalPoint.action = visualization_msgs::Marker::ADD;
-        goalPoint.id = 0;
-        goalPoint.type = visualization_msgs::Marker::POINTS;
-        goalPoint.scale.x = 0.2;
-        goalPoint.scale.y = 0.2;
-        goalPoint.color.b = 1.0f;
-        goalPoint.color.a = 1.0;
+        {
+            visualization_msgs::Marker goalPoint;
+            goalPoint.header.stamp = ros::Time::now();
+            goalPoint.header.frame_id = "/map";
+            goalPoint.ns = "turtlebotSlam";
+            goalPoint.pose.orientation.w = 1.0;
+            goalPoint.action = visualization_msgs::Marker::ADD;
+            goalPoint.id = 0;
+            goalPoint.type = visualization_msgs::Marker::POINTS;
+            goalPoint.scale.x = mapResolution * 2.0f;
+            goalPoint.scale.y = mapResolution * 2.0f;
+            goalPoint.color.g = 1.0f;
+            goalPoint.color.a = 1.0;
 
-        geometry_msgs::Point p;
-        p.x = (destination.x - mapSize[0]/2) * mapResolution;
-        p.y= (destination.y - mapSize[1]/2) * mapResolution;
-        p.z = 0;
+            geometry_msgs::Point p;
+            p.x = (destination.x - mapSize[0]/2) * mapResolution - 7.5 * mapResolution;
+            p.y = (destination.y - mapSize[1]/2) * mapResolution - 7.5 * mapResolution;
+            //p.x = (destination.x - mapSize[0]/2) * mapResolution;
+            //p.y= (destination.y - mapSize[1]/2) * mapResolution;
+            p.z = 0.02;
 
-        ROS_ERROR("p.x: %f p.y: %f", p.x, p.y);
+            goalPoint.points.push_back(p);
+            goalPoint.colors.push_back(goalPoint.color);
+            goalPointPub.publish(goalPoint);
 
-        goalPoint.points.push_back(p);
-        goalPoint.colors.push_back(goalPoint.color);
-        ROS_ERROR("second publish");
-        goalPointPub.publish(goalPoint);
+            ROS_ERROR("Published Goal Marker");
+        }
+        {
+            visualization_msgs::Marker goalPoint;
+            goalPoint.header.stamp = ros::Time::now();
+            goalPoint.header.frame_id = "/map";
+            goalPoint.ns = "turtlebotSlam";
+            goalPoint.pose.orientation.w = 1.0;
+            goalPoint.action = visualization_msgs::Marker::ADD;
+            goalPoint.id = 1;
+            goalPoint.type = visualization_msgs::Marker::POINTS;
+            goalPoint.scale.x = mapResolution * 0.8f;
+            goalPoint.scale.y = mapResolution * 0.8f;
+            goalPoint.color.g = 1.0f;
+            goalPoint.color.b = 1.0f;
+            goalPoint.color.a = 1.0;
+
+            geometry_msgs::Point p;
+            p.x = (destination.x - mapSize[0]/2) * mapResolution - 7.5 * mapResolution;
+            p.y = (destination.y - mapSize[1]/2) * mapResolution - 7.5 * mapResolution;
+            //p.x = (destination.x - mapSize[0]/2) * mapResolution;
+            //p.y= (destination.y - mapSize[1]/2) * mapResolution;
+            p.z = 0.06;
+
+            goalPoint.points.push_back(p);
+            goalPoint.colors.push_back(goalPoint.color);
+            goalPointPub.publish(goalPoint);
+
+            ROS_ERROR("Published Goal Marker");
+        }
 
         goalPub.publish(goal);
     }
@@ -269,29 +343,47 @@ public:
     // Process the incoming laser scan message
     void commandCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
         if (fsm == FSM_MOVE_FORWARD) {
-
+            unsigned int minIndex = ceil((MIN_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
+            unsigned int maxIndex = ceil((MAX_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
+            float closestRange = msg->ranges[minIndex];
+            for (unsigned int currIndex = minIndex + 1; currIndex < maxIndex; currIndex++) {
+                float currAngle = msg->angle_min + msg->angle_increment*currIndex;
+              if (msg->ranges[currIndex] < closestRange && currAngle <= msg->angle_max) {
+                closestRange = msg->ranges[currIndex];   }
+            }
+            ROS_INFO_STREAM("Range: " << closestRange);
+            if(closestRange <= PROXIMITY_RANGE_M){
+                fsm = FSM_ROTATE;
+                rotateStartTime = (ros::Time::now());
+                rotateDuration = ros::Duration(rand()%4);
+            }
         }
     };
 
     void spin() {
-        ros::Rate rate(5); // Specify the FSM loop rate in Hz
-        while (ros::ok()) { // Keep spinning loop until user presses Ctrl+C
-            if(fsm == FSM_MOVE_FORWARD) {
-                move(FORWARD_SPEED_MPS,0);
-            } else {
-                if(ros::Time::now() > rotateStartTime+rotateDuration){
-                    fsm=FSM_MOVE_FORWARD;
-                }else{
-                    move(0,ROTATE_SPEED_RADPS);
-                }
+        ros::Rate rate(1); // Specify the FSM loop rate in Hz
 
+
+        while (ros::ok()) { // Keep spinning loop until user presses Ctrl+C
+            if(fsm != FSM_STOP){
+
+                if(fsm == FSM_MOVE_FORWARD) {
+                    move(FORWARD_SPEED_MPS,0);
+                } else {
+                    if(ros::Time::now() > rotateStartTime+rotateDuration){
+                        fsm=FSM_MOVE_FORWARD;
+                    }else{
+                        move(0,ROTATE_SPEED_RADPS);
+                    }
+                }
             }
+
             ros::spinOnce(); // Need to call this function often to allow ROS to process incoming messages
             rate.sleep(); // Sleep for the rest of the cycle, to enforce the FSM loop rate
         }
     };
 
-    enum FSM {FSM_MOVE_FORWARD, FSM_ROTATE};
+    enum FSM {FSM_MOVE_FORWARD, FSM_ROTATE, FSM_STOP};
     // Tunable parameters
 
     const static double MIN_SCAN_ANGLE_RAD = -20.0/180*M_PI;
@@ -307,6 +399,7 @@ protected:
     ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic
     ros::Subscriber mapSub;  //Subscriber to the gmapping map topic
     ros::Subscriber odomSub; //subscriber for the odom topic
+    ros::Subscriber goalSub; //subscriber for the goal state
     ros::Publisher pointPub;
     ros::Publisher goalPointPub;
     tf::StampedTransform tfMap;
