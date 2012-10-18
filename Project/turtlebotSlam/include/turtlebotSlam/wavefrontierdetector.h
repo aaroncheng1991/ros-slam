@@ -21,6 +21,7 @@ namespace wfd {
 
     struct ValuePose {
 
+        ValuePose() : pos(), val(1000000000) {}
         ValuePose(_pose p, double v) : pos(p), val(v) {}
 
         _pose pos;
@@ -31,11 +32,11 @@ namespace wfd {
 
     struct same_pose
     {
-        same_pose(const _pose& x): p(x) {}
+        same_pose(const ValuePose& x): p(x) {}
 
-        _pose p;
+        ValuePose p;
 
-        bool operator()(const _pose& pp) const { return p.x == pp.x && p.y == pp.y; }
+        bool operator()(const ValuePose& pp) const { return p.pos.x == pp.pos.x && p.pos.y == pp.pos.y; }
     };
 
 
