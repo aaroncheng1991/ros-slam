@@ -13,6 +13,7 @@
     <remap from="scan" to="base_scan"/>
     <param name="odom_frame" value="odom"/>
     <param name="map_update_interval" value="4.0"/>
+    <param name="temporalUpdate" value="2.0"/>
     <param name="xmin" value="-50.0"/>
     <param name="ymin" value="-50.0"/>
     <param name="xmax" value="50.0"/>

@@ -2,7 +2,7 @@
 
 local_costmap:
   #We'll publish the voxel grid used by this costmap
-  publish_voxel_map: true
+  publish_voxel_map: false
 
   #Set the global and robot frames for the costmap
   global_frame: odom
