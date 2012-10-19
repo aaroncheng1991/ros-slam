@@ -407,11 +407,6 @@ public:
 
         while (ros::ok()) {
 
-            updateFrontiers();
-            checkTargetValidity();
-
-            ROS_ERROR("In state: %d", fsm);
-
             if(fsm == FSM_FOLLOW_GOAL){
                 // Do nothing for now (just let navigation run)
             } if(fsm == FSM_SELECT_NEW_GOAL){
@@ -422,15 +417,18 @@ public:
                 } else {
                     fsm = FSM_RND_ROTATE;   // we have no targets left; switch to random
                 }
-            } else if(fsm == FSM_RND_ROTATE) {
+            } else if(fsm == FSM_RND_MOVE_FORWARD) {
                 move(FORWARD_SPEED_MPS,0);
-            } else if(fsm == FSM_RND_MOVE_FORWARD){
+            } else if(fsm == FSM_RND_ROTATE){
                 if(ros::Time::now() > rotateStartTime+rotateDuration){
                     fsm=FSM_RND_MOVE_FORWARD;
                 } else {
                     move(0,ROTATE_SPEED_RADPS);
                 }
             }
+
+            updateFrontiers();
+            checkTargetValidity();
 
             ros::spinOnce(); // Need to call this function often to allow ROS to process incoming messages
             rate.sleep(); // Sleep for the rest of the cycle, to enforce the FSM loop rate
@@ -443,8 +441,8 @@ public:
     const static double MIN_SCAN_ANGLE_RAD = -20.0/180*M_PI;
     const static double MAX_SCAN_ANGLE_RAD = +20.0/180*M_PI;
     const static float PROXIMITY_RANGE_M = 0.75; // Should be smaller than sensor_msgs::LaserScan::range_max
-    const static double FORWARD_SPEED_MPS = 0.6;
-    const static double ROTATE_SPEED_RADPS = M_PI/2;
+    const static double FORWARD_SPEED_MPS = 0.1;
+    const static double ROTATE_SPEED_RADPS = M_PI/8;
 
 
 protected:
@@ -469,7 +467,7 @@ protected:
     int mapSize[2];
     float mapResolution;
     enum FSM fsm; // Finite state machine for the random walk algorithm
-    ros::Time rotateStartTime; // Start time of the rotation
+    ros::Time rotateStartTime, ; // Start time of the rotation
     ros::Duration rotateDuration; // Duration of the rotation
     nav_msgs::OccupancyGrid::ConstPtr map;
     bool hasNewMap;
