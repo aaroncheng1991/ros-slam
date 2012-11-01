@@ -1,0 +1,15 @@
+<package>
+  <description brief="slam_interface">
+
+     slam_interface
+
+  </description>
+  <author>jusuf</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/slam_interface</url>
+  <depend package="roscpp"/>
+
+</package>
+
+

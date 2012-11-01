@@ -1,0 +1,15 @@
+<package>
+  <description brief="graph_slam">
+
+     graph_slam
+
+  </description>
+  <author>jusuf</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/graph_slam</url>
+  <depend package="roscpp"/>
+
+</package>
+
+
