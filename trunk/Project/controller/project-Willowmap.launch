@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find controller)/project.launch" />    
+    <node pkg="stage" type="stageros" name="stageros" args="$(find controller)/world/lab.world" respawn="false" output="screen" />
+</launch>

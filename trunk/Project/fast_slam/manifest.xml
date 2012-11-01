@@ -1,0 +1,15 @@
+<package>
+  <description brief="fast_slam">
+
+     fast_slam
+
+  </description>
+  <author>jusuf</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/fast_slam</url>
+  <depend package="roscpp"/>
+
+</package>
+
+

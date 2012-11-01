@@ -1,0 +1,18 @@
+<package>
+  <description brief="navigation">
+
+     navigation
+
+  </description>
+  <author>jusuf</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/navigation</url>
+  <depend package="roscpp"/>
+  <depend package="move_base"/>
+  <depend package="geometry_msgs"/>
+  <depend package="nav_msgs" />
+
+</package>
+
+
