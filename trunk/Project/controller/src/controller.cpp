@@ -18,6 +18,7 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 #include "sensor_msgs/LaserScan.h"
+#include "controller/fd/ffd.h"
 #include "controller/fd/wfd.h"
 #include "visualization_msgs/Marker.h"
 
@@ -84,21 +85,28 @@ public:
 
     // Process the incoming laser scan message; used in random navigation
     void commandCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
-        if (fsm == FSM_RND_MOVE_FORWARD) {
-            unsigned int minIndex = ceil((MIN_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
-            unsigned int maxIndex = ceil((MAX_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
-            float closestRange = msg->ranges[minIndex];
-            for (unsigned int currIndex = minIndex + 1; currIndex < maxIndex; currIndex++) {
-                float currAngle = msg->angle_min + msg->angle_increment*currIndex;
-              if (msg->ranges[currIndex] < closestRange && currAngle <= msg->angle_max) {
-                closestRange = msg->ranges[currIndex];   }
+        unsigned int minIndex = ceil((MIN_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
+        unsigned int maxIndex = ceil((MAX_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
+        float closestRange = msg->ranges[minIndex];
+        for (unsigned int currIndex = minIndex + 1; currIndex < maxIndex; currIndex++) {
+            float currAngle = msg->angle_min + msg->angle_increment*currIndex;
+            // choose closest range
+            if (msg->ranges[currIndex] < closestRange && currAngle <= msg->angle_max) {
+                closestRange = msg->ranges[currIndex];
             }
-            ROS_INFO_STREAM("Range: " << closestRange);
-            if(closestRange <= PROXIMITY_RANGE_M){
-                fsm = FSM_RND_ROTATE;
-                rotateStartTime = (ros::Time::now());
-                rotateDuration = ros::Duration(rand()%4);
-            }
+            // add element to sensorMeasurements
+            _pose measurementPose;
+            measurementPose.x = robot_pos.x;
+            measurementPose.y = robot_pos.y;
+            sensorMeasurements.push_back(measurementPose);
+        }
+
+        ROS_INFO_STREAM("Range: " << closestRange);
+        ROS_INFO_STREAM("Angle: " << msg->angle_min);
+        if(fsm == FSM_RND_MOVE_FORWARD && closestRange <= PROXIMITY_RANGE_M){
+            fsm = FSM_RND_ROTATE;
+            rotateStartTime = (ros::Time::now());
+            rotateDuration = ros::Duration(rand()%4);
         }
     };
 
@@ -119,7 +127,7 @@ public:
         ROS_ERROR("Distance between destination and robot: %f", dist);
 
         bool cDist = dist < 3,
-                cStillFrontier = std::find_if(lastFoundFrontiers.begin(), lastFoundFrontiers.end(), wfd::same_pose(destination)) == lastFoundFrontiers.end();
+                cStillFrontier = std::find_if(lastFoundFrontiers.begin(), lastFoundFrontiers.end(), fd::same_pose(destination)) == lastFoundFrontiers.end();
 
         if( noPath
                 || cDist   // check if in range of destination
@@ -165,10 +173,11 @@ public:
         fd::_pose pose = robot_pos;
 
         if(std::isnan(pose.x) || std::isnan(pose.y) || pose.x < 0 || pose.x >= map->info.width || pose.y < 0 || pose.y >= map->info.height) return;
-
-        wfd::WaveFrontierDetector frontierDetector(map);
+        frontierDetector.updateMap(map);
+        // TODO use real sensor measurements!!
+        frontierDetector.update(sensorMeasurements);
         std::vector<fd::_pose> frontiers = frontierDetector.frontierDetection(pose);
-        lastFoundFrontiers = frontierDetector.sortFrontiers(wfd::DIST_ROBOT, pose.x, pose.y);
+        lastFoundFrontiers = fd::sortFrontiers(fd::DIST_ROBOT, pose.x, pose.y, frontiers);
         targettingStack = lastFoundFrontiers;
 
         ROS_ERROR("Updating Map && Visualization");
@@ -201,7 +210,7 @@ public:
         points.color.a = 1.0f;
 
         for(unsigned int i = 0 ; i < lastFoundFrontiers.size() ; ++i) {
-            wfd::ValuePose pose = lastFoundFrontiers[i];
+            fd::ValuePose pose = lastFoundFrontiers[i];
 
             geometry_msgs::Point p;
             p.x = (pose.pos.x - mapSize[0]/2) * mapResolution - 7.5 * mapResolution;
@@ -444,9 +453,9 @@ protected:
     ros::Publisher pointPub;
     ros::Publisher goalPointPub;
     ros::Timer timer;
-    std::vector<wfd::ValuePose> lastFoundFrontiers, targettingStack;
+    std::vector<fd::ValuePose> lastFoundFrontiers, targettingStack;
     boost::mt19937 rng;
-    wfd::ValuePose destination;
+    fd::ValuePose destination;
     _pose robot_pos;
     int mapSize[2];
     float mapResolution;
@@ -457,6 +466,9 @@ protected:
     bool hasNewMap;
     bool changedDest, noPath;
     typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
+    ffd::FastFrontierDetection frontierDetector;
+    // sensor measurements
+    std::vector<_pose> sensorMeasurements;
 };
 
 int main(int argc, char **argv) {
