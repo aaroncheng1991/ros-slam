@@ -7,7 +7,7 @@ _pose sampleNewPose(_pose xOld, _pose m) {
     // calculate p(xNew | xOld, m)
 }
 
-_pose measurementPrediction(Eigen::Vector mean, _pose x) {
+_pose measurementPrediction(Eigen::Matrix mean, _pose x) {
     // TODO
     // calculate h(mean, x)
     //     =     h(mean, sampledPose)
