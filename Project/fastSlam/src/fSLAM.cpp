@@ -48,7 +48,6 @@ public:
     }
 
     void motionModel(const geometry_msgs::TwistConstPtr& cmd_vel) {
-        cmd_vel.get();
     }
 
     void commandCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
