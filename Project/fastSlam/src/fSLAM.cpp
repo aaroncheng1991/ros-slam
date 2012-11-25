@@ -20,7 +20,7 @@
 #include "tf/tfMessage.h"
 #include "tf/transform_listener.h"
 #include "tf/transform_broadcaster.h"
-#include "fSLAM.h"
+#include "FastSLAMAlgorithm.h"
 #include <Eigen/Dense>
 
 class fSLAM {
@@ -48,7 +48,7 @@ public:
     }
 
     void motionModel(const geometry_msgs::TwistConstPtr& cmd_vel) {
-
+        cmd_vel.get();
     }
 
     void commandCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
@@ -60,5 +60,6 @@ protected:
     ros::Subscriber cmdvelSub; // subscribing to the odometry (Action model)
     ros::Publisher mapPub;
     std::vector<fslam::Particle> particles;
+
     static const unsigned int PARTICLECOUNT=30;
 };
