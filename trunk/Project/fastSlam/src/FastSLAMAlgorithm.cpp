@@ -13,7 +13,7 @@ _pose measurementPrediction(Eigen::Matrix mean, _pose x) {
     //     =     h(mean, sampledPose)
 }
 
-Matrix jacobian(Eigen::Vector mean, _pose x) {
+Matrix jacobian(Eigen::Matrix mean, _pose x) {
     // TODO
     // calculate jacobian h'(mean, newSampledPoseX)
 }
