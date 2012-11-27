@@ -4,31 +4,38 @@
 #include <map>
 #include <Eigen/Dense>
 #include "nav_msgs/OccupancyGrid.h"
+#include "geometry_msgs/Pose.h"
+#include <Eigen/Dense>
+
 namespace fslam {
 
-typedef  nav_msgs::OccupancyGrid::_info_type::_origin_type::_position_type _pose;
+    typedef  geometry_msgs::Pose _pose;
 
-struct Feature {
-    Eigen::Matrix mean;
-    Eigen::Matrix covariance;
-    //Iterations used for likelyhood of existance.
-    int iterated;
-    //Not sure if we need weight or if it's just calculated through i.
-    double weight;
-    _pose location;
-    Feature(Eigen::Vector mu, Eigen::Matrix sigma, _pose loc) {
-        mean = mu;
-        covariance = sigma;
-        location = loc;
-    }
+    struct Particle;
+
+    struct Feature {
+        //Here we place the mean and standard deviation
+        Eigen::Vector2d mean;
+        Eigen::Vector2d covariance;
+        //Iterations used for likelyhood of existance.
+        int iterated;
+        //Not sure if we need weight or if it's just calculated through i.
+        double weight;
+        Feature(Eigen::Vector2d mu, Eigen::Vector2d sigma){
+            mean = mu;
+            covariance = sigma;
+            iterated = 1;
+        }
 
 
-};
+    };
 
-struct Particle {
-    _pose robotPos;
-    std::vector<Feature> features;
-};
+    struct Particle {
+        double weight;
+        std::vector<fslam::Particle> history;
+        _pose robotPos;
+        std::vector<Feature> features;
+    };
 
 class FastSLAMAlgorithm {
 public:
