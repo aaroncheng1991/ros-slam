@@ -97,7 +97,7 @@ public:
     }
 
     void resample() {
-        for (int i = 0; i < PARTICLECOUNT; ++i) {
+        for (unsigned int i = 0; i < PARTICLECOUNT; ++i) {
 
         }
     }
