@@ -25,6 +25,7 @@
 #include <Eigen/Dense>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
+#include "../../visualization/include/visualizeParticles.h"
 
 
 class fSLAM {
@@ -48,6 +49,7 @@ public:
         //Subscribing to the laser topic for the sensor model
         laserSub = nh.subscribe("scan", 1, &fSLAM::sensorModel, this);
         cmdvelSub = nh.subscribe("/odom",1 , &fSLAM::motionModel, this);
+
     }
 
     void motionModel(const nav_msgs::Odometry msg) {
