@@ -46,7 +46,7 @@ public:
         }
 
         //Subscribing to the laser topic for the sensor model
-        laserSub = nh.subscribe("scan", 1, &fSLAM::commandCallback, this);
+        laserSub = nh.subscribe("scan", 1, &fSLAM::sensorModel, this);
         cmdvelSub = nh.subscribe("/odom",1 , &fSLAM::motionModel, this);
     }
 

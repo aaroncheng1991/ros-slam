@@ -39,7 +39,7 @@ namespace fslam {
 
 class FastSLAMAlgorithm {
 public:
-    std::vector<Particle> fastSLAM(Eigen::Matrix zt, _pose motion, std::vector<Particle> Y);
+    std::vector<Particle> fastSLAM(Eigen::Matrix2d zt, _pose motion, std::vector<Particle> Y);
 
 };
 }
