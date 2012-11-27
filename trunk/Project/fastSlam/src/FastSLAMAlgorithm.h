@@ -2,7 +2,7 @@
 #define FASTSLAMALGORITHM_H
 #include <vector>
 #include <map>
-#include <Eigen/src/Core/Matrix.h>
+#include <Eigen/Dense>
 #include "nav_msgs/OccupancyGrid.h"
 namespace fslam {
 
