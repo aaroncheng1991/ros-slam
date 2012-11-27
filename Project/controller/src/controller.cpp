@@ -175,7 +175,7 @@ public:
         if(std::isnan(pose.x) || std::isnan(pose.y) || pose.x < 0 || pose.x >= map->info.width || pose.y < 0 || pose.y >= map->info.height) return;
         frontierDetector.updateMap(map);
         // TODO use real sensor measurements!!
-        frontierDetector.update(sensorMeasurements);
+        frontierDetector.update(wfd::nothing());
         std::vector<fd::_pose> frontiers = frontierDetector.frontierDetection(pose);
         lastFoundFrontiers = fd::sortFrontiers(fd::DIST_ROBOT, pose.x, pose.y, frontiers);
         targettingStack = lastFoundFrontiers;
@@ -466,7 +466,7 @@ protected:
     bool hasNewMap;
     bool changedDest, noPath;
     typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
-    ffd::FastFrontierDetection frontierDetector;
+    wfd::WaveFrontierDetector frontierDetector;
     // sensor measurements
     std::vector<_pose> sensorMeasurements;
 };
