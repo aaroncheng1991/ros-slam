@@ -32,7 +32,7 @@ class fSLAM {
 
 public:
 
-    fSLAM(ros::NodeHandle& nh) {
+    fSLAM(ros::NodeHandle& nh) : visualization(visualization::Visualization(nh)) {
          movementnoise=0.0001;
         //initially setting all particles to the map's origin. Since we build our own map we known the initial location on the map we're building around him. The particles will start the spread out
         //in the motion model. We will have no landmarks yet.
@@ -89,6 +89,7 @@ public:
             particles[i].robotPos.orientation.w+=varOW();
         }
         lastOdom = msg;
+        visualization.visualizeParticles(particles);
     }
 
     void sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan) {
@@ -111,4 +112,5 @@ protected:
     std::vector<fslam::Particle> particles;
     float movementnoise;
     static const unsigned int PARTICLECOUNT=30;
+    visualization::Visualization visualization;
 };
