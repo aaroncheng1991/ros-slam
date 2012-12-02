@@ -53,6 +53,7 @@ public:
     }
 
     void motionModel(const nav_msgs::Odometry msg) {
+        ROS_INFO_STREAM("updating");
         //First we calculate the difference between new and old ODOM to get the new pose
         float dx=msg.pose.pose.position.x-lastOdom.pose.pose.position.x;
         float dy=msg.pose.pose.position.y-lastOdom.pose.pose.position.y;
@@ -103,6 +104,14 @@ public:
         }
     }
 
+    void run() {
+        ros::Rate rate(1);
+        while(ros::ok()) {
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
 protected:
     ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic (sensor model)
     ros::Subscriber cmdvelSub; // subscribing to the odometry (Action model)
@@ -114,3 +123,10 @@ protected:
     static const unsigned int PARTICLECOUNT=30;
     visualization::Visualization visualization;
 };
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, "fastSlam");
+    ros::NodeHandle n;
+    fSLAM fastSlam(n);
+    fastSlam.run();
+}
