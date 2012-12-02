@@ -4,8 +4,8 @@
 namespace fslam {
 	
 	// Static Declarations
-    const unsigned int FastSLAMAlgorithm::PARTICLECOUNT = 30;
-
+    const unsigned int FastSLAMAlgorithm::PARTICLECOUNT = 15;
+    const unsigned int FastSLAMAlgorithm::KEEP_PARTICLES = 10;
 	// Con- / De- structor Declarations
 
     FastSLAMAlgorithm::FastSLAMAlgorithm(ros::NodeHandle& nh){
@@ -15,7 +15,7 @@ namespace fslam {
 
 		//initially setting all particles to the map's origin. Since we build our own map we known the initial location on the map we're building around him. The particles will start the spread out
 		//in the motion model. We will have no landmarks yet.
-		for(unsigned int i=0;i<PARTICLECOUNT;++i) {
+        for(unsigned int i=0;i<PARTICLECOUNT;++i) {
             fslam::_pose position;
 			position.position.x = 0;
 			position.position.y = 0;
@@ -24,8 +24,7 @@ namespace fslam {
 			p.weight=1.0/PARTICLECOUNT;
 			p.robotPos = position;
 			particles.push_back(p);
-		}
-		particles[5].weight = 1.0;
+        }
 
 		//Subscribing to the laser topic for the sensor model
         laserSub = nh.subscribe("/base_scan", 1, &FastSLAMAlgorithm::sensorModel, this);
@@ -60,9 +59,10 @@ namespace fslam {
 	}
 
 	void FastSLAMAlgorithm::sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan){
-		//Implement complicated stuff for weighing features 'n shit.
-		this->resample();
+        //TODO: Implement complicated stuff for weighing features 'n shit.
+
 		//Finally, resample
+        this->resample();
 	}
 
 	void FastSLAMAlgorithm::motionModel(const nav_msgs::Odometry msg){
@@ -104,13 +104,24 @@ namespace fslam {
 		lastOdom = msg;
 	}
 
-	void FastSLAMAlgorithm::resample(){
-        ROS_ERROR("Weight before sorting %f", particles[0].weight);
+    void FastSLAMAlgorithm::resample(){
+        //Sorting weights from Big to small.
         std::sort(particles.begin(),particles.end());
-        ROS_ERROR("Weight after sorting %f", particles[0].weight);
-        /*for (unsigned int i = 0; i < PARTICLECOUNT; ++i) {
+        //We remove an amount of particles at the end. In this case 15 - the 10 we keep.
+        unsigned int toResample = PARTICLECOUNT-KEEP_PARTICLES;
+        for (unsigned int i = 0; i < toResample; ++i) {
+            particles.pop_back();
+        }
 
-        }*/
+        //We now add the same amount back to the list.
+        //For now based on the best particle might decide to add some gaussian noise to these particles. Maybe change initial weight?
+        for (unsigned int i = 0; i < toResample; ++i) {
+            fslam::Particle p;
+            p.robotPos = particles[0].robotPos;
+            p.weight=1.0/PARTICLECOUNT;
+            particles.push_back(p);
+        }
+
 	}
 
     void FastSLAMAlgorithm::run() {
