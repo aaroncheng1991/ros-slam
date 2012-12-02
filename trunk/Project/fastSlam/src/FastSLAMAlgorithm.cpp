@@ -113,6 +113,14 @@ namespace fslam {
         }*/
 	}
 
+    void FastSLAMAlgorithm::run() {
+        ros::Rate rate(1);
+        while(ros::ok()) {
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
 //_pose sampleNewPose(_pose xOld, _pose m) {
     // TODO
     // calculate p(xNew | xOld, m)
@@ -148,12 +156,12 @@ namespace fslam {
 //    }
     // TODO implement code from line 11 page 461
 //}
-    int main(int argc, char **argv) {
-        ros::init(argc, argv, "fastSlam");	// Initiate new ROS node named "fastSlam"
-        ros::NodeHandle n;
-        FastSLAMAlgorithm fslam(n);			// Create new fSLAM object
-        ros::spin();
-        return 0;
-    }
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, "fastSlam");	// Initiate new ROS node named "fastSlam"
+    ros::NodeHandle n;
+    fslam::FastSLAMAlgorithm fslam(n);			// Create new fSLAM object
+    fslam.run();
 }
 

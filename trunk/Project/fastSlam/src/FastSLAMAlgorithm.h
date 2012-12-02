@@ -83,6 +83,7 @@ namespace fslam {
 			void sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan);
 			void motionModel(const nav_msgs::Odometry msg);
 			void resample();
+            void run();
 
 		protected:
 
