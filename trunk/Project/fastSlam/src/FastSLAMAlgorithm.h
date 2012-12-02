@@ -62,7 +62,7 @@ namespace fslam {
 		_pose robotPos;
 		std::vector<Feature> features;
 
-		bool operator<(const Particle & rhs) const { return this->weight < rhs.weight;}
+        bool operator<(const Particle & rhs) const { return rhs.weight < this->weight;}
 	};
 
 	class FastSLAMAlgorithm {
@@ -70,9 +70,10 @@ namespace fslam {
 		public:
 
 			// Static definition
-
+                //Amount of particles in total
 			static const unsigned int PARTICLECOUNT;
-
+                //Amount of particles to keep from previous iteration
+            static const unsigned int KEEP_PARTICLES;
 			// Con- / De- structors
 
             FastSLAMAlgorithm(ros::NodeHandle& nh);
