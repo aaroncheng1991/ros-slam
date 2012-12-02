@@ -1,6 +1,5 @@
 #include "FastSLAMAlgorithm.h"
 
-
 namespace fslam {
 	
 	// Static Declarations
@@ -8,7 +7,7 @@ namespace fslam {
     const unsigned int FastSLAMAlgorithm::KEEP_PARTICLES = 10;
 	// Con- / De- structor Declarations
 
-    FastSLAMAlgorithm::FastSLAMAlgorithm(ros::NodeHandle& nh){
+    FastSLAMAlgorithm::FastSLAMAlgorithm(ros::NodeHandle& nh) : visualization(visualization::Visualization(nh)){
 
 		ROS_ERROR("entered constructor");
 		movementnoise=0.0001;
@@ -100,8 +99,9 @@ namespace fslam {
 			particles[i].robotPos.orientation.x+=varOX();
 			particles[i].robotPos.orientation.z+=varOZ();
 			particles[i].robotPos.orientation.w+=varOW();
-		}
-		lastOdom = msg;
+        }
+        visualization.visualizeParticles(particles);
+        lastOdom = msg;
 	}
 
     void FastSLAMAlgorithm::resample(){
