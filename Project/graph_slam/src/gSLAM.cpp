@@ -3,10 +3,6 @@
 class fSLAM{
 
 	protected:
-		Matrix<int, 30, 30> omega; //has to be dynamical later
+        Eigen::Matrix2d test;
 
-		void initialize(){
-		ROSERROR("testerdetest");
-		}
-
-}
+};
