@@ -47,7 +47,7 @@ namespace fslam {
 
             FastSLAMAlgorithm(ros::NodeHandle& nh);
 
-			// Methods 
+            // Methods
             Eigen::MatrixXd measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x);
             Eigen::MatrixXd jacobian(Eigen::Vector3d x,Eigen::Vector2d mean);
             Eigen::MatrixXd measurementCovariance(Eigen::MatrixXd g, Eigen::Vector2d cov);

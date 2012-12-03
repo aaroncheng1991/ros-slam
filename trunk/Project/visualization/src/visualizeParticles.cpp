@@ -24,8 +24,8 @@ void Visualization::visualizeParticles(std::vector<fslam::Particle> particles) {
     marker.color.r = 1.0;
     marker.color.a = 1.0;
     BOOST_FOREACH(fslam::Particle particle, particles) {
-        double x = particle.robotPos.position.x;
-        double y = particle.robotPos.position.y;
+        double x = particle.robotPos[0];
+        double y = particle.robotPos[1];
         geometry_msgs::Point p;
         p.x = x;
         p.y = y;
