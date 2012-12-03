@@ -52,9 +52,14 @@ namespace fslam {
         Eigen::MatrixXd q;
         return q;
     }
-    double FastSLAMAlgorithm::featureWeight(Eigen::MatrixXd q, const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::MatrixXd prediction){
+    double FastSLAMAlgorithm::featureWeight(Eigen::MatrixXd q, const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::MatrixXd zprime){
         //Calculate the likelyhood of this feature's correspondance (I think with each detected part of the laserscan)
-        double weight;
+        Eigen::VectorXd z;
+        for(unsigned int i = 0 ; i < scan->ranges.size() ; ++i) {
+            z[i] = scan->ranges[i];
+        }
+        double powerexp = -0.5*(z-zprime).transpose() * q.inverse()*(z-zprime);
+        double weight = pow((2*M_PI*q).norm(), 0.5)*exp(powerexp);
         return weight;
     }
     Eigen::Vector2d FastSLAMAlgorithm::initMean(const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::Vector3d x) {
