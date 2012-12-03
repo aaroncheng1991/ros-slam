@@ -114,7 +114,8 @@ namespace fslam {
         }
 
         //We now add the same amount back to the list.
-        //For now based on the best particle might decide to add some gaussian noise to these particles. Maybe change initial weight?
+        //For now based on the best particle might decide to add some gaussian noise to these particles.
+        //Maybe change initial weight and make it copy random particles based on weight?
         for (unsigned int i = 0; i < toResample; ++i) {
             fslam::Particle p;
             p.robotPos = particles[0].robotPos;
