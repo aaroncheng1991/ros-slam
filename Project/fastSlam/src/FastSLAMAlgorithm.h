@@ -5,7 +5,6 @@
 #include <Eigen/Dense>
 #include "nav_msgs/OccupancyGrid.h"
 #include "geometry_msgs/Pose.h"
-#include <Eigen/Dense>
 #include <actionlib/client/simple_action_client.h>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -30,7 +29,6 @@
 #include "tf/transform_listener.h"
 #include "tf/transform_broadcaster.h"
 #include "../../visualization/include/visualizeParticles.h"
-#include <Eigen/Dense>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 
@@ -50,8 +48,8 @@ namespace fslam {
             FastSLAMAlgorithm(ros::NodeHandle& nh);
 
 			// Methods 
-
-			std::vector<Particle> fastSLAM(Eigen::Matrix2d zt, _pose motion, std::vector<Particle> Y);
+            Eigen::MatrixXd measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x);
+            std::vector<Particle> fastSLAM(Eigen::Matrix2d zt, Eigen::Vector3d motion, std::vector<Particle> Y);
 			void sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan);
 			void motionModel(const nav_msgs::Odometry msg);
 			void resample();
