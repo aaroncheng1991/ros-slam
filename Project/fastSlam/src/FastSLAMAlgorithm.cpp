@@ -43,6 +43,7 @@ namespace fslam {
         Eigen::MatrixXd g;
         //TODO
          //calc jacobians lol
+
         return g;
     }
     Eigen::MatrixXd FastSLAMAlgorithm::measurementCovariance(Eigen::MatrixXd g, Eigen::Vector2d cov){
@@ -98,6 +99,7 @@ namespace fslam {
                 Eigen::MatrixXd gMatrix = jacobian(particles[i].robotPos,particles[i].features[j].mean);
                 Eigen::MatrixXd qMatrix = measurementCovariance(particles[i].robotPos,particles[i].features[j].mean);
                 double w = featureWeight(qMatrix, scan, z);
+                this->particles[i].features[j].weight = w;
             }
             int oldFeatureCount = particles[i].features.size();
             //Part I don't really understand. Weighing of new landmark? landmark <-> feature. only one per iteration of the algo?
