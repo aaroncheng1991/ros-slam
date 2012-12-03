@@ -8,7 +8,6 @@
 namespace fslam {
 
     // Static Declarations
-    typedef geometry_msgs::Pose _pose;
     struct Particle;
 
     struct Feature {
@@ -29,7 +28,8 @@ namespace fslam {
     struct Particle {
         double weight;
         std::vector<fslam::Particle> history;
-        _pose robotPos;
+
+        Eigen::Vector3d robotPos;
         std::vector<Feature> features;
 
         bool operator<(const Particle & rhs) const { return rhs.weight < this->weight;}

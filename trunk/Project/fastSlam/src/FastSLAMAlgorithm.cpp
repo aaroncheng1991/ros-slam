@@ -8,16 +8,15 @@ namespace fslam {
 	// Con- / De- structor Declarations
 
     FastSLAMAlgorithm::FastSLAMAlgorithm(ros::NodeHandle& nh) : visualization(visualization::Visualization(nh)){
-
 		ROS_ERROR("entered constructor");
 		movementnoise=0.0001;
 
 		//initially setting all particles to the map's origin. Since we build our own map we known the initial location on the map we're building around him. The particles will start the spread out
 		//in the motion model. We will have no landmarks yet.
         for(unsigned int i=0;i<PARTICLECOUNT;++i) {
-            fslam::_pose position;
-			position.position.x = 0;
-			position.position.y = 0;
+            Eigen::Vector3d position;
+            position[0] = 0;
+            position[1] = 0;
 
 			fslam::Particle p;
 			p.weight=1.0/PARTICLECOUNT;
@@ -28,13 +27,19 @@ namespace fslam {
 		//Subscribing to the laser topic for the sensor model
         laserSub = nh.subscribe("/base_scan", 1, &FastSLAMAlgorithm::sensorModel, this);
         cmdvelSub = nh.subscribe("/odom",1 , &FastSLAMAlgorithm::motionModel, this);
-
 	}
 
 
 	// Method Declarations
 
-	std::vector<Particle> FastSLAMAlgorithm::fastSLAM(Eigen::Matrix2d zt, _pose motion, std::vector<Particle> Y){
+    Eigen::MatrixXd FastSLAMAlgorithm::measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x) {
+        Eigen::MatrixXd z;
+        //TODO
+         //calculate h(mean, x)=h(mean, sampledPose)
+        return z;
+    }
+
+    std::vector<Particle> FastSLAMAlgorithm::fastSLAM(Eigen::Matrix2d zt, Eigen::Vector3d motion, std::vector<Particle> Y){
 		//    for(unsigned int k = 0; k < Y.size(); ++k) {
 		//        _pose xOld = Y[k].robotPos;
 		//        std::vector<Feature> features = Y[k].features;
@@ -57,9 +62,18 @@ namespace fslam {
         return ret;
 	}
 
-	void FastSLAMAlgorithm::sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan){
+    void FastSLAMAlgorithm::sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan){
         //TODO: Implement complicated stuff for weighing features 'n shit.
 
+        //For all particles
+        for (unsigned int i = 0; i < PARTICLECOUNT; ++i) {
+            //For all features in this particle
+            for (unsigned int j = 0; j < particles[i].features.size(); ++j) {
+                //Measurement prediction step h(mean, pose) (p319?)
+                Eigen::MatrixXd z = measurementPrediction(particles[i].features[j].mean, particles[i].robotPos);
+
+            }
+        }
 		//Finally, resample
         this->resample();
 	}
@@ -93,12 +107,15 @@ namespace fslam {
 
 
 		for(unsigned int i=0;i<PARTICLECOUNT;++i) {
-			particles[i].robotPos.position.x += varX();
-			particles[i].robotPos.position.y += varY();
-			particles[i].robotPos.orientation.y+=varOY();
-			particles[i].robotPos.orientation.x+=varOX();
-			particles[i].robotPos.orientation.z+=varOZ();
-			particles[i].robotPos.orientation.w+=varOW();
+            geometry_msgs::Quaternion prevQ = tf::createQuaternionMsgFromYaw(particles[i].robotPos[2]);
+            prevQ.y+=varOY();
+            prevQ.x+=varOX();
+            prevQ.z+=varOZ();
+            prevQ.w+=varOW();
+            particles[i].robotPos[0] += varX();
+            particles[i].robotPos[1] += varY();
+            particles[i].robotPos[2] = tf::getYaw(prevQ);
+
         }
         visualization.visualizeParticles(particles);
         lastOdom = msg;
@@ -138,11 +155,7 @@ namespace fslam {
     // calculate p(xNew | xOld, m)
 //}
 
-//Eigen::Matrix2d measurementPrediction(Eigen::Matrix2d mean, _pose x) {
-    // TODO
-    // calculate h(mean, x)
-    //     =     h(mean, sampledPose)
-//}
+
 
 //Eigen::Matrix2d jacobian(Eigen::Matrix2d mean, _pose x) {
     // TODO
