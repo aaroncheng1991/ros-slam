@@ -36,7 +36,30 @@ namespace fslam {
         Eigen::MatrixXd z;
         //TODO
          //calculate h(mean, x)=h(mean, sampledPose)
+        //IN the paper they call it g instead of h, who the fuck knows what they mean
         return z;
+    }
+    Eigen::MatrixXd FastSLAMAlgorithm::jacobian(Eigen::Vector3d x,Eigen::Vector2d mean){
+        Eigen::MatrixXd g;
+        //TODO
+         //calc jacobians lol
+        return g;
+    }
+    Eigen::MatrixXd FastSLAMAlgorithm::measurementCovariance(Eigen::MatrixXd g, Eigen::Vector2d cov){
+        //Calculate measurement covariance (G transposed x covariance x G + Rt)
+        //Rt is the noise, maybe start without it?
+        Eigen::MatrixXd q;
+        return q;
+    }
+    double FastSLAMAlgorithm::featureWeight(Eigen::MatrixXd q, const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::MatrixXd prediction){
+        //Calculate the likelyhood of this feature's correspondance (I think with each detected part of the laserscan)
+        double weight;
+        return weight;
+    }
+    Eigen::Vector2d FastSLAMAlgorithm::initMean(const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::Vector3d x) {
+        //g^-1(zt, xt)
+        Eigen::Vector2d mean;
+        return mean;
     }
 
     std::vector<Particle> FastSLAMAlgorithm::fastSLAM(Eigen::Matrix2d zt, Eigen::Vector3d motion, std::vector<Particle> Y){
@@ -71,8 +94,42 @@ namespace fslam {
             for (unsigned int j = 0; j < particles[i].features.size(); ++j) {
                 //Measurement prediction step h(mean, pose) (p319?)
                 Eigen::MatrixXd z = measurementPrediction(particles[i].features[j].mean, particles[i].robotPos);
-
+                //Calculate jacobian with pose and mean
+                Eigen::MatrixXd gMatrix = jacobian(particles[i].robotPos,particles[i].features[j].mean);
+                Eigen::MatrixXd qMatrix = measurementCovariance(particles[i].robotPos,particles[i].features[j].mean);
+                double w = featureWeight(qMatrix, scan, z);
             }
+            int oldFeatureCount = particles[i].features.size();
+            //Part I don't really understand. Weighing of new landmark? landmark <-> feature. only one per iteration of the algo?
+            //Somewhere here, features should be added to the feature list for this particle.
+            //skipping to the next loop
+
+            for (unsigned int j = 0; j < particles[i].features.size(); ++j) {
+                //If new feature
+                if(j > oldFeatureCount-1){
+                    particles[i].features[j].mean = initMean(scan, particles[i].robotPos);
+                    //particles[i].features[j].covariance =
+                    //  inverse(jacobian(particles[i].robotPos,particles[i].features[j].mean))*noise*jacobian(particles[i].robotPos,particles[i].features[j].mean);
+                    //Iterator is already initiated when creating a new feature
+                }
+                //else if(Observed feature){
+                    //Not sure yet how to detect if it was observed, it is done in the part I skipped earlier I think
+                    //First, calculate Kalman Gain
+                    //Eigen::MatrixXd K = particles[i].features[j].covariance*jacobian*inverse(measurementCovariance())
+                    //Updating the mean
+                    //particles[i].features[j].mean = particles[i].features[j].mean * transposed(K(zt-zn))
+                    //Updated Covariance
+                    //particles[i].features[j].covariance= ((Identity matrix)-K*transposed(jacobian)) * particles[i].features[j].covariance
+                    //particles[i].features[j].iterator++;
+                //}
+                //else if(not observed but should have been)
+                    //particles[i].features[j].iterated -= 1;
+                    //if(particles[i].features[j].iterated < 0) {
+                    //  particles[i].features.removeAt(j); removing dubious feature, this code won't work btw, just pseudocode.
+                    //}
+                //}
+            }
+
         }
 		//Finally, resample
         this->resample();

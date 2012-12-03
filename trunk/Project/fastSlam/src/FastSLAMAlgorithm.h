@@ -49,6 +49,10 @@ namespace fslam {
 
 			// Methods 
             Eigen::MatrixXd measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x);
+            Eigen::MatrixXd jacobian(Eigen::Vector3d x,Eigen::Vector2d mean);
+            Eigen::MatrixXd measurementCovariance(Eigen::MatrixXd g, Eigen::Vector2d cov);
+            Eigen::Vector2d initMean(const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::Vector3d x);
+            double featureWeight(Eigen::MatrixXd q, const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::MatrixXd prediction);
             std::vector<Particle> fastSLAM(Eigen::Matrix2d zt, Eigen::Vector3d motion, std::vector<Particle> Y);
 			void sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan);
 			void motionModel(const nav_msgs::Odometry msg);
