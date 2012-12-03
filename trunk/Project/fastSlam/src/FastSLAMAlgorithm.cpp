@@ -98,7 +98,7 @@ namespace fslam {
         for (unsigned int i = 0; i < PARTICLECOUNT; ++i) {
             //For all features in this particle
             for (unsigned int j = 0; j < particles[i].features.size(); ++j) {
-                //Measurement prediction step h(mean, pose) (p319?)
+                //Measurement prediction step h(mean, pose) (p319?) check p14 of the paper
                 Eigen::MatrixXd z = measurementPrediction(particles[i].features[j].mean, particles[i].robotPos);
                 //Calculate jacobian with pose and mean
                 Eigen::MatrixXd gMatrix = jacobian(particles[i].robotPos,particles[i].features[j].mean);
@@ -122,11 +122,11 @@ namespace fslam {
                 //else if(Observed feature){
                     //Not sure yet how to detect if it was observed, it is done in the part I skipped earlier I think
                     //First, calculate Kalman Gain
-                    //Eigen::MatrixXd K = particles[i].features[j].covariance*jacobian*inverse(measurementCovariance())
+                    //Eigen::MatrixXd K = particles[i].features[j].covariance*jacobian*measurementCovariance().inverse())
                     //Updating the mean
-                    //particles[i].features[j].mean = particles[i].features[j].mean * transposed(K(zt-zn))
+                    //particles[i].features[j].mean = particles[i].features[j].mean * K(zt-zn).transpose();
                     //Updated Covariance
-                    //particles[i].features[j].covariance= ((Identity matrix)-K*transposed(jacobian)) * particles[i].features[j].covariance
+                    //particles[i].features[j].covariance= ((Identity matrix)-K*jacobian.transpose()) * particles[i].features[j].covariance
                     //particles[i].features[j].iterator++;
                 //}
                 //else if(not observed but should have been)
