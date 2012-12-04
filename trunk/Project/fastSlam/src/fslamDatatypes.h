@@ -18,11 +18,12 @@ namespace fslam {
         int iterated;
         //Not sure if we need weight or if it's just calculated through i.
         double weight;
-        Feature(Eigen::Vector2d mu, Eigen::Vector2d sigma){
-            mean = mu;
-            covariance = sigma;
-            iterated = 1;
-        }
+        Eigen::VectorXd measurementPrediction;
+        Eigen::MatrixXd jacobian;
+        Eigen::MatrixXd measurementCovariance;
+        bool inRange;
+
+        Feature() { iterated = 0; inRange = false;}
     };
 
     struct Particle {
