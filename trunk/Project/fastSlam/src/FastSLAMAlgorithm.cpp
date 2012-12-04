@@ -125,15 +125,16 @@ namespace fslam {
             //Part I don't really understand. Weighing of new landmark? landmark <-> feature. only one per iteration of the algo?
             //Somewhere here, features should be added to the feature list for this particle.
             //skipping to the next loop
+            int c = 0; // todo add argmax
 
             for (unsigned int j = 0; j < particles[i].features.size(); ++j) {
                 //If new feature
-                if(j > oldFeatureCount-1){
+                if(j == oldFeatureCount+1){
                     particles[i].features[j].mean = initMean(scan, particles[i].robotPos);
                     particles[i].features[j].covariance = jacobian(particles[i].robotPos,particles[i].features[j].mean).inverse()*Rt*jacobian(particles[i].robotPos,particles[i].features[j].mean);
                     //Iterator is already initiated when creating a new feature
                 }
-                //else if(Observed feature){
+                else if(j == c){
                     //Not sure yet how to detect if it was observed, it is done in the part I skipped earlier I think
                     //First, calculate Kalman Gain
                     //Eigen::MatrixXd K = particles[i].features[j].covariance*jacobian*measurementCovariance().inverse())
@@ -142,7 +143,7 @@ namespace fslam {
                     //Updated Covariance
                     //particles[i].features[j].covariance= ((Identity matrix)-K*jacobian.transpose()) * particles[i].features[j].covariance
                     //particles[i].features[j].iterator++;
-                //}
+                }
                 //else if(not observed but should have been)
                     //particles[i].features[j].iterated -= 1;
                     //if(particles[i].features[j].iterated < 0) {

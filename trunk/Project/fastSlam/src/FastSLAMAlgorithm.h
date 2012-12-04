@@ -69,7 +69,7 @@ namespace fslam {
 			ros::Subscriber cmdvelSub;		// subscribing to the odometry (Action model)
 			float movementnoise;
             boost::mt19937 rng;
-            Eigen::MatrixXf Rt;
+            Eigen::MatrixXd Rt;
             visualization::Visualization visualization;
 	};
 
