@@ -42,14 +42,14 @@ namespace fslam {
     Eigen::MatrixXd FastSLAMAlgorithm::jacobian(Eigen::Vector3d x,Eigen::Vector2d mean){
         Eigen::MatrixXd g;
         //TODO
-         //calc jacobians lol
+         //calc jacobians lol, but why of 2 vectors? does that even mean something?
 
         return g;
     }
     Eigen::MatrixXd FastSLAMAlgorithm::measurementCovariance(Eigen::MatrixXd g, Eigen::Vector2d cov){
         //Calculate measurement covariance (G transposed x covariance x G + Rt)
-        //Rt is the noise, maybe start without it?
-        Eigen::MatrixXd q;
+        //Rt is the noise, maybe start without it? We should ask the swarmlab friends
+        Eigen::MatrixXd q = g.transpose()*cov*g;
         return q;
     }
     double FastSLAMAlgorithm::featureWeight(Eigen::MatrixXd q, const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::MatrixXd zprime){
