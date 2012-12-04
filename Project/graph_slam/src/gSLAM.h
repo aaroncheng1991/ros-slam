@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <utility>
+#include "ros/ros.h"
 
 using namespace std;
 
@@ -16,12 +17,16 @@ namespace gslam {
 
         public:
 
-                /* Con- / De- structors Declarations */
+            /*****************************************
+             *  CON- / De- structors Declarations
+             *****************************************/
 
             gSLAM();
             ~gSLAM();
 
-                /* Method Declarations */
+            /*****************************************
+             *  Method Declarations
+             *****************************************/
 
 
             /****
@@ -51,7 +56,7 @@ namespace gslam {
              *      See Table 2, Thrun-Montemerlo, 2006, 'The GraphSLAM Algorithm with Applications to Large-Scale Mapping of Urban Structures'
              */
 
-            pair<Matrix* /* omega */, Vector* /* xi */> linearize(Matrix* input, Matrix* measurements, Matrix* correspondence, Matrix* estimatedPoses);
+            pair<Matrix* /* omega */, Vector* /* xi */> linearize(Matrix* input, Matrix* measurements, Vector* correspondence, Matrix* estimatedPoses);
 
 
             /****
@@ -73,7 +78,7 @@ namespace gslam {
              *     See Table 4, Thrun-Montemerlo, 2006, 'The GraphSLAM Algorithm with Applications to Large-Scale Mapping of Urban Structures'
              */
 
-            pair<Vector* /* mu */, Matrix* /* sigma */> solve(Matrix* reducedOmega, Vector* reducedXi, Matrix* omega, double xi);
+            pair<Vector* /* mu */, Matrix* /* sigma */> solve(Matrix* reducedOmega, Vector* reducedXi, Matrix* omega, Vector* xi);
 
 
             /****
@@ -102,7 +107,7 @@ namespace gslam {
 int main(int argc, char **argv){
     ros::init(argc, argv, "graphSlam");  // Initiate new ROS node named "fastSlam"
     ros::NodeHandle n;
-    gSLAM gslam;
+    gslam::gSLAM gslam;
 
 }
 
