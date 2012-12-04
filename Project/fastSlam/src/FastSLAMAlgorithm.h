@@ -48,7 +48,7 @@ namespace fslam {
             FastSLAMAlgorithm(ros::NodeHandle& nh);
 
             // Methods
-            Eigen::MatrixXd measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x);
+            Eigen::MatrixXd measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x, const sensor_msgs::LaserScan::ConstPtr& scan);
             Eigen::MatrixXd jacobian(Eigen::Vector3d x,Eigen::Vector2d mean);
             Eigen::MatrixXd measurementCovariance(Eigen::MatrixXd g, Eigen::Vector2d cov);
             Eigen::Vector2d initMean(const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::Vector3d x);
@@ -69,6 +69,7 @@ namespace fslam {
 			ros::Subscriber cmdvelSub;		// subscribing to the odometry (Action model)
 			float movementnoise;
             boost::mt19937 rng;
+            Eigen::MatrixXf Rt;
             visualization::Visualization visualization;
 	};
 
