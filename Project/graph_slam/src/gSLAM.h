@@ -45,6 +45,7 @@ namespace gslam {
 
             /****
              * Initializes the GSLam algorithm; given input from start till t and returns the estimated mean poses from 0:t
+             *      - input: delta Speed & delta Rotation per row
              *     See Table 1, Thrun-Montemerlo, 2006, 'The GraphSLAM Algorithm with Applications to Large-Scale Mapping of Urban Structures'
              */
 
