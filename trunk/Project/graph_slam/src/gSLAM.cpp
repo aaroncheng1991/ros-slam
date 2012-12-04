@@ -31,15 +31,15 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
 
     int features = correspondence->size();
 
-    bool pairFound = false;
+    bool pairEliminated = false;
     do {
-        pairFound = false;
+        pairEliminated = false;
 
         for(int a = 0 ; a < features ; a++){
             for(int b = a ; b < features ; b++){
                 // Check all possible pairs of map features
 
-                if ( (*correspondence)(a) != b ){  // TODO check this; is this the non-correspondence test in the algo?
+                if ( (*correspondence)(a) != b ){ // If A != B then check if correspondence is the same
                     double pi_a_b = correspondenceTest(omega_xi.first, omega_xi.second, mu_sigma.second, a, b);
 
                     if( pi_a_b > gSLAM::CHI){
@@ -54,17 +54,14 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
                         reducedOmega_Xi  = reduce(omega_xi.first, omega_xi.second);
                         mu_sigma         = solve(reducedOmega_Xi.first, reducedOmega_Xi.second, omega_xi.first, omega_xi.second);
 
-                    }
-                } else {
-                    double pi_a_b = correspondenceTest(omega_xi.first, omega_xi.second, mu_sigma.second, a, b);
+                        pairEliminated = true;
 
-                    if(pi_a_b < gSLAM::CHI)
-                        pairFound = true;
+                    }
                 }
             }
         }
 
-    } while(pairFound);
+    } while(pairEliminated);
 
     return mu_sigma.first;
 }
