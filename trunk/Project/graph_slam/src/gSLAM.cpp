@@ -22,7 +22,7 @@ gSLAM::~gSLAM(){}
 
 Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
 
-    Vector*  correspondence = createCorrespondence(control, measurements);
+    Vector* correspondence = createCorrespondence(control, measurements);
     Matrix* mu = initialize(control);
 
     pair<Matrix*, Vector*> omega_xi         = linearize(control, measurements, correspondence, mu);
@@ -50,6 +50,7 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
                         // TODO: Maybe we can do the recalculation in the external side of the loop? (This way optimization madness lies)
 
                         // Update the matrix with the reduced / found features
+
                         omega_xi         = linearize(control, measurements, correspondence, mu);
                         reducedOmega_Xi  = reduce(omega_xi.first, omega_xi.second);
                         mu_sigma         = solve(reducedOmega_Xi.first, reducedOmega_Xi.second, omega_xi.first, omega_xi.second);
@@ -71,7 +72,11 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
  *****************************************/
 
 Matrix* /* allPreviousMu */ gSLAM::initialize(Matrix* control){
-    return NULL;
+    Matrix* mu = new Matrix(control->row(), 3);
+
+    mu->row(0) = 0;
+
+    return mu;
 }
 
 pair<Matrix* /* omega */, Vector* /* xi */> gSLAM::linearize(Matrix* input, Matrix* measurements, Vector* correspondence, Matrix* estimatedPoses){
