@@ -24,6 +24,28 @@
 
 class Controller {
 
+    /*
+          Guided Exploration Behavior)
+            - A) No Target Frontier & Frontier List not empty
+                - Sort list frontiers on selection "best"
+                - Send frontier to navigation stack
+                    - Path found;                                   goto B)
+                    - No Path found;
+                        - pop Frontier from List
+                        - List empty ->                             goto C)
+            - B) Tracking Frontier
+                - Update FD invalidates Frontier
+                        - Frontier list empty                       goto C)
+                        - Frontier list not empty                   goto A)
+                - Destination Reached               ->              goto A)
+                - Destination Unreachable           ->              goto A)
+            - C) No Target Frontier, Frontier List empty
+                -                                                   goto Unguided Walking behaviour)
+
+          Unguided Exploration Behavior)
+            -
+      */
+
 public:
     // Construst a new RandomWalk object and hook up this ROS node
     // to the simulated robot's velocity control and laser topics
