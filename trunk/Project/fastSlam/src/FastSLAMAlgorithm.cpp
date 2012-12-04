@@ -32,11 +32,26 @@ namespace fslam {
 
 	// Method Declarations
 
-    Eigen::MatrixXd FastSLAMAlgorithm::measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x) {
-        Eigen::MatrixXd z;
+    Eigen::MatrixXd FastSLAMAlgorithm::measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x, const sensor_msgs::LaserScan::ConstPtr& scan) {
+        Eigen::VectorXd z;
+        double dy = mean[1]-x[1];
+        double dx = mean[0]-x[0];
+        double alpha = atan2(abs(dy), abs(dx));
+        double distance = sqrt(dx*dx+dy*dy);
+        double angle = x[2] - alpha;
+        if(alpha > x[2]) angle = alpha - x[2];
+
+        for(int i = scan->angle_min ; i < scan->angle_max ; i += scan->angle_increment) {
+            if(angle >= (scan->angle_min) && angle <= (scan->angle_max) && i <= angle && (i + (scan->angle_increment) > angle)) {
+                z[i-(scan->angle_min)] = distance;
+            } else {
+                z[i-(scan->angle_min)] = 0;
+            }
+        }
         //TODO
          //calculate h(mean, x)=h(mean, sampledPose)
         //IN the paper they call it g instead of h, who the fuck knows what they mean
+
         return z;
     }
     Eigen::MatrixXd FastSLAMAlgorithm::jacobian(Eigen::Vector3d x,Eigen::Vector2d mean){
@@ -49,7 +64,7 @@ namespace fslam {
     Eigen::MatrixXd FastSLAMAlgorithm::measurementCovariance(Eigen::MatrixXd g, Eigen::Vector2d cov){
         //Calculate measurement covariance (G transposed x covariance x G + Rt)
         //Rt is the noise, maybe start without it? We should ask the swarmlab friends
-        Eigen::MatrixXd q = g.transpose()*cov*g;
+        Eigen::MatrixXd q = g.transpose()*cov*g + Rt;
         return q;
     }
     double FastSLAMAlgorithm::featureWeight(Eigen::MatrixXd q, const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::MatrixXd zprime){
@@ -59,7 +74,7 @@ namespace fslam {
             z[i] = scan->ranges[i];
         }
         double powerexp = -0.5*(z-zprime).transpose() * q.inverse()*(z-zprime);
-        double weight = pow((2*M_PI*q).norm(), 0.5)*exp(powerexp);
+        double weight = pow((2*M_PI*q).determinant(), 0.5)*exp(powerexp);
         return weight;
     }
     Eigen::Vector2d FastSLAMAlgorithm::initMean(const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::Vector3d x) {
@@ -99,10 +114,10 @@ namespace fslam {
             //For all features in this particle
             for (unsigned int j = 0; j < particles[i].features.size(); ++j) {
                 //Measurement prediction step h(mean, pose) (p319?) check p14 of the paper
-                Eigen::MatrixXd z = measurementPrediction(particles[i].features[j].mean, particles[i].robotPos);
+                Eigen::MatrixXd z = measurementPrediction(particles[i].features[j].mean, particles[i].robotPos, scan);
                 //Calculate jacobian with pose and mean
                 Eigen::MatrixXd gMatrix = jacobian(particles[i].robotPos,particles[i].features[j].mean);
-                Eigen::MatrixXd qMatrix = measurementCovariance(particles[i].robotPos,particles[i].features[j].mean);
+                Eigen::MatrixXd qMatrix = measurementCovariance(gMatrix,particles[i].features[j].covariance);
                 double w = featureWeight(qMatrix, scan, z);
                 this->particles[i].features[j].weight = w;
             }
@@ -115,8 +130,7 @@ namespace fslam {
                 //If new feature
                 if(j > oldFeatureCount-1){
                     particles[i].features[j].mean = initMean(scan, particles[i].robotPos);
-                    //particles[i].features[j].covariance =
-                    //  inverse(jacobian(particles[i].robotPos,particles[i].features[j].mean))*noise*jacobian(particles[i].robotPos,particles[i].features[j].mean);
+                    particles[i].features[j].covariance = jacobian(particles[i].robotPos,particles[i].features[j].mean).inverse()*Rt*jacobian(particles[i].robotPos,particles[i].features[j].mean);
                     //Iterator is already initiated when creating a new feature
                 }
                 //else if(Observed feature){
