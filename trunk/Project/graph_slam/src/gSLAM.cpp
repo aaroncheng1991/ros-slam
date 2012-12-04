@@ -6,17 +6,32 @@
 using namespace gslam;
 using namespace std;
 
+double gSLAM::CHI = 0.2;        // TODO: Set this through experimentation
+
+
+/*****************************************
+ *  CON- / De- structors Declarations
+ *****************************************/
+
+gSLAM::gSLAM(){}
+gSLAM::~gSLAM(){}
+
+/*****************************************
+ *  Method Declarations
+ *****************************************/
+
 Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
 
-    Vector* correspondence = createCorrespondence(control, measurements);
-
+    Vector*  correspondence = createCorrespondence(control, measurements);
     Matrix* mu = initialize(control);
 
     pair<Matrix*, Vector*> omega_xi         = linearize(control, measurements, correspondence, mu);
     pair<Matrix*, Vector*> reducedOmega_Xi  = reduce(omega_xi.first, omega_xi.second);
     pair<Vector*, Matrix*> mu_sigma         = solve(reducedOmega_Xi.first, reducedOmega_Xi.second, omega_xi.first, omega_xi.second);
 
-    boolean pairFound = false;
+    int features = correspondence->size();
+
+    bool pairFound = false;
     do {
         pairFound = false;
 
@@ -24,13 +39,13 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
             for(int b = a ; b < features ; b++){
                 // Check all possible pairs of map features
 
-                if ( correspondence(a) != b ){  // TODO check this; is this the non-correspondence test in the algo?
+                if ( (*correspondence)(a) != b ){  // TODO check this; is this the non-correspondence test in the algo?
                     double pi_a_b = correspondenceTest(omega_xi.first, omega_xi.second, mu_sigma.second, a, b);
 
                     if( pi_a_b > gSLAM::CHI){
 
                         for(int i = 0 ; i < features ; i++) // The features are the same; we remove feature B
-                            if(correspondence(i) == b) correspondence(a) = a;
+                            if((*correspondence)(i) == b) (*correspondence)(a) = a;
 
                         // TODO: Maybe we can do the recalculation in the external side of the loop? (This way optimization madness lies)
 
@@ -54,12 +69,36 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
     return mu_sigma.first;
 }
 
+/*****************************************
+ *  GRAPH SLAM HIGH LEVEL METHODS
+ *****************************************/
 
-int main(int argc, char **argv){
-    ros::init(argc, argv, "graphSlam");  // Initiate new ROS node named "fastSlam"
-    ros::NodeHandle n;
-    gSLAM gslam;
-    //fslam::FastSLAMAlgorithm fslam(n);      // Create new fSLAM object
-    gslam.testmethod();
-    gslam.run();
+Matrix* /* allPreviousMu */ gSLAM::initialize(Matrix* control){
+    return NULL;
 }
+
+pair<Matrix* /* omega */, Vector* /* xi */> gSLAM::linearize(Matrix* input, Matrix* measurements, Vector* correspondence, Matrix* estimatedPoses){
+    return pair<Matrix*, Vector*>();
+}
+
+pair<Matrix* /* reducedOmega */, Vector* /* reducedXi */ > gSLAM::reduce(Matrix* omega, Vector* xi){
+    return pair<Matrix*, Vector*>();
+}
+
+pair<Vector* /* mu */, Matrix* /* sigma */> gSLAM::solve(Matrix* reducedOmega, Vector* reducedXi, Matrix* omega, Vector* xi){
+    return pair<Vector*, Matrix*>();
+}
+
+double /* Pi_a_b */ gSLAM::correspondenceTest(Matrix* omega, Vector* xi, Matrix* sigma, int featureIdxA, int featureIdxB){
+    return NULL;
+}
+
+
+/*****************************************
+ *  GRAPH SLAM LOW LEVEL UTILITY METHODS
+ *****************************************/
+
+Vector* /* correspondence */ gSLAM::createCorrespondence(Matrix* input, Matrix* measurements){
+    return NULL;
+}
+
