@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/graph_slam</url>
   <depend package="roscpp"/>
-  <depend package="gmapping"/>
+	<depend package="move_base"/>
 
 </package>
 
