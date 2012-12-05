@@ -32,7 +32,7 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
     pair<Vector*, Matrix*> mu_sigma         = solve(reducedOmega_Xi.first, reducedOmega_Xi.second, omega_xi.first, omega_xi.second);
 
     MatrixI& correspondence = *correspondenceRef;
-    int features = correspondence.size();
+    int features = correspondence.rows() * correspondence.cols();
 
     bool pairEliminated = false;
     do {
@@ -42,7 +42,7 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
             for(int b = a ; b < features ; b++){
                 // Check all possible pairs of map features
 
-                if ( correspondence(a) != b ){ // If A != B then check if correspondence is the same
+                if ( a != b && correspondence(a) != b ){ // If A != B then check if correspondence is the same
                     double pi_a_b = correspondenceTest(omega_xi.first, omega_xi.second, mu_sigma.second, a, b);
 
                     if( pi_a_b > gSLAM::CHI){
@@ -51,6 +51,7 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
                             if(correspondence(i) == b) correspondence(a) = a;
 
                         // TODO: Maybe we can do the recalculation in the external side of the loop? (This way optimization madness lies)
+                        //      UPDATE: Yeah, probably
 
                         // Update the matrix with the reduced / found features
 
