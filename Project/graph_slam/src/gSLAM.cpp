@@ -3,6 +3,8 @@
 #include "gSLAM.h"
 #include "ros/ros.h"
 
+// #define EIGEN_NO_DEBUG
+
 using namespace gslam;
 using namespace std;
 
@@ -23,7 +25,7 @@ gSLAM::~gSLAM(){}
 Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
 
     Vector* correspondence = createCorrespondence(control, measurements);
-    Matrix* mu = initialize(control);
+    Matrix* mu = initialize(*control);
 
     pair<Matrix*, Vector*> omega_xi         = linearize(control, measurements, correspondence, mu);
     pair<Matrix*, Vector*> reducedOmega_Xi  = reduce(omega_xi.first, omega_xi.second);
@@ -71,16 +73,27 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
  *  GRAPH SLAM HIGH LEVEL METHODS
  *****************************************/
 
-Matrix* /* allPreviousMu */ gSLAM::initialize(Matrix* control){
-    Matrix* mu = new Matrix(control->row(), 3);
+Matrix* /* allPreviousMu */ gSLAM::initialize(Matrix& input){
+    int rows = input.rows();
+    Matrix* muRef = new Matrix(rows+1, 3);
+    Matrix& mu = *muRef;
 
-    mu->row(0) = 0;
+    // Setup initial pose
+    mu.row(0).setZero();
 
-    return mu;
+    // Initialize the new poses with control data
+    for(int i = 0 ; i < rows ; ++i)
+        mu.row(i+1) = mu.row(i) + input.row(i);
+
+    return muRef;
 }
 
 pair<Matrix* /* omega */, Vector* /* xi */> gSLAM::linearize(Matrix* input, Matrix* measurements, Vector* correspondence, Matrix* estimatedPoses){
-    return pair<Matrix*, Vector*>();
+    pair<Matrix*, Vector*> output;
+
+
+
+    return output;
 }
 
 pair<Matrix* /* reducedOmega */, Vector* /* reducedXi */ > gSLAM::reduce(Matrix* omega, Vector* xi){
@@ -92,7 +105,7 @@ pair<Vector* /* mu */, Matrix* /* sigma */> gSLAM::solve(Matrix* reducedOmega, V
 }
 
 double /* Pi_a_b */ gSLAM::correspondenceTest(Matrix* omega, Vector* xi, Matrix* sigma, int featureIdxA, int featureIdxB){
-    return NULL;
+    return 0.0;
 }
 
 
@@ -100,7 +113,18 @@ double /* Pi_a_b */ gSLAM::correspondenceTest(Matrix* omega, Vector* xi, Matrix*
  *  GRAPH SLAM LOW LEVEL UTILITY METHODS
  *****************************************/
 
-Vector* /* correspondence */ gSLAM::createCorrespondence(Matrix* input, Matrix* measurements){
-    return NULL;
+Matrix* /* correspondence */ gSLAM::createCorrespondence(Matrix* input, Matrix* measurements){
+
+    int cols = input->rows(), rows = measurements->rows();
+    Eigen::MatrixXi* correspondence = new Eigen::MatrixXi(rows, cols);
+    Eigen::MatrixXi& cor = correspondence;
+
+    int idx = 0;
+
+    for(int i=0 ; i < rows; ++i)
+        for(int j = 0; j < cols; ++j)
+            cor(i,j) = idx++;
+
+    return correspondence;
 }
 

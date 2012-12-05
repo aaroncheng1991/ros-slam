@@ -17,6 +17,15 @@ namespace gslam {
 
         public:
 
+            /***
+             * Global Input Variable documentation:
+             *
+             *  - Each row in a matrix is another timestep T
+             *
+             *  - Control is a matrix in which rows designate timesteps and the columns: dX, dY, dRotation
+             */
+
+
             /*****************************************
              *  CON- / De- structors Declarations
              *****************************************/
@@ -49,7 +58,7 @@ namespace gslam {
              *     See Table 1, Thrun-Montemerlo, 2006, 'The GraphSLAM Algorithm with Applications to Large-Scale Mapping of Urban Structures'
              */
 
-            Matrix* /* allPreviousMu */ initialize(Matrix* control);
+            Matrix* /* allPreviousMu */ initialize(Matrix& control);
 
 
             /****
@@ -94,7 +103,10 @@ namespace gslam {
              *  GRAPH SLAM LOW LEVEL UTILITY METHODS
              *****************************************/
 
-            Vector* /* correspondence */ createCorrespondence(Matrix* input, Matrix* measurements);
+            /****
+             * Returns a matrix initialized with unique index for each correspondence(timeStep, featureIndex)
+             */
+            Matrix* /* correspondence */ createCorrespondence(Matrix* input, Matrix* measurements);
 
                 /* Variable Declarations */
 
@@ -104,12 +116,18 @@ namespace gslam {
 
 }
 
+using namespace gslam;
 
 int main(int argc, char **argv){
-    ros::init(argc, argv, "graphSlam");  // Initiate new ROS node named "fastSlam"
-    ros::NodeHandle n;
-    gslam::gSLAM gslam;
+    //ros::init(argc, argv, "graphSlam");  // Initiate new ROS node named "fastSlam"
+    //ros::NodeHandle n;
+    gSLAM gslam;
 
+    Matrix control = Matrix::Random(12,3);
+    Matrix* c = gslam.initialize(control);
+
+    cout << "Control matrix is: \n" << control << endl;
+    cout << "After initialization the matrix is: \n" << *c << endl;
 }
 
 
