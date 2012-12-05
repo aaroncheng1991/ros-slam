@@ -11,11 +11,14 @@ using namespace std;
 namespace gslam {
 
     typedef Eigen::MatrixXd Matrix;
+    typedef Eigen::MatrixXi MatrixI;
     typedef Eigen::VectorXd Vector;
 
     class gSLAM{
 
         public:
+
+            // GIANT TODO: Currently setup in such a way that we get giant problems with regards to NEW / DELETE; REWRITE THIS
 
             /***
              * Global Input Variable documentation:
@@ -66,7 +69,7 @@ namespace gslam {
              *      See Table 2, Thrun-Montemerlo, 2006, 'The GraphSLAM Algorithm with Applications to Large-Scale Mapping of Urban Structures'
              */
 
-            pair<Matrix* /* omega */, Vector* /* xi */> linearize(Matrix* input, Matrix* measurements, Vector* correspondence, Matrix* estimatedPoses);
+            pair<Matrix* /* omega */, Vector* /* xi */> linearize(Matrix* input, Matrix* measurements, MatrixI* correspondence, Matrix* estimatedPoses);
 
 
             /****
@@ -106,7 +109,7 @@ namespace gslam {
             /****
              * Returns a matrix initialized with unique index for each correspondence(timeStep, featureIndex)
              */
-            Matrix* /* correspondence */ createCorrespondence(Matrix* input, Matrix* measurements);
+            MatrixI* /* correspondence */ createCorrespondence(Matrix* input, Matrix* measurements);
 
                 /* Variable Declarations */
 
