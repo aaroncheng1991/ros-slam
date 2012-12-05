@@ -24,14 +24,15 @@ gSLAM::~gSLAM(){}
 
 Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
 
-    Vector* correspondence = createCorrespondence(control, measurements);
+    MatrixI* correspondenceRef = createCorrespondence(control, measurements);
     Matrix* mu = initialize(*control);
 
-    pair<Matrix*, Vector*> omega_xi         = linearize(control, measurements, correspondence, mu);
+    pair<Matrix*, Vector*> omega_xi         = linearize(control, measurements, correspondenceRef, mu);
     pair<Matrix*, Vector*> reducedOmega_Xi  = reduce(omega_xi.first, omega_xi.second);
     pair<Vector*, Matrix*> mu_sigma         = solve(reducedOmega_Xi.first, reducedOmega_Xi.second, omega_xi.first, omega_xi.second);
 
-    int features = correspondence->size();
+    MatrixI& correspondence = *correspondenceRef;
+    int features = correspondence.size();
 
     bool pairEliminated = false;
     do {
@@ -41,19 +42,19 @@ Vector* gSLAM::graphslam(Matrix* control, Matrix* measurements){
             for(int b = a ; b < features ; b++){
                 // Check all possible pairs of map features
 
-                if ( (*correspondence)(a) != b ){ // If A != B then check if correspondence is the same
+                if ( correspondence(a) != b ){ // If A != B then check if correspondence is the same
                     double pi_a_b = correspondenceTest(omega_xi.first, omega_xi.second, mu_sigma.second, a, b);
 
                     if( pi_a_b > gSLAM::CHI){
 
                         for(int i = 0 ; i < features ; i++) // The features are the same; we remove feature B
-                            if((*correspondence)(i) == b) (*correspondence)(a) = a;
+                            if(correspondence(i) == b) correspondence(a) = a;
 
                         // TODO: Maybe we can do the recalculation in the external side of the loop? (This way optimization madness lies)
 
                         // Update the matrix with the reduced / found features
 
-                        omega_xi         = linearize(control, measurements, correspondence, mu);
+                        omega_xi         = linearize(control, measurements, correspondenceRef, mu);
                         reducedOmega_Xi  = reduce(omega_xi.first, omega_xi.second);
                         mu_sigma         = solve(reducedOmega_Xi.first, reducedOmega_Xi.second, omega_xi.first, omega_xi.second);
 
@@ -88,8 +89,9 @@ Matrix* /* allPreviousMu */ gSLAM::initialize(Matrix& input){
     return muRef;
 }
 
-pair<Matrix* /* omega */, Vector* /* xi */> gSLAM::linearize(Matrix* input, Matrix* measurements, Vector* correspondence, Matrix* estimatedPoses){
+pair<Matrix* /* omega */, Vector* /* xi */> gSLAM::linearize(Matrix* input, Matrix* measurements, MatrixI* correspondence, Matrix* estimatedPoses){
     pair<Matrix*, Vector*> output;
+
 
 
 
@@ -113,11 +115,11 @@ double /* Pi_a_b */ gSLAM::correspondenceTest(Matrix* omega, Vector* xi, Matrix*
  *  GRAPH SLAM LOW LEVEL UTILITY METHODS
  *****************************************/
 
-Matrix* /* correspondence */ gSLAM::createCorrespondence(Matrix* input, Matrix* measurements){
+MatrixI* /* correspondence */ gSLAM::createCorrespondence(Matrix* input, Matrix* measurements){
 
     int cols = input->rows(), rows = measurements->rows();
-    Eigen::MatrixXi* correspondence = new Eigen::MatrixXi(rows, cols);
-    Eigen::MatrixXi& cor = correspondence;
+    MatrixI* correspondence = new MatrixI(rows, cols);
+    MatrixI& cor = *correspondence;
 
     int idx = 0;
 
