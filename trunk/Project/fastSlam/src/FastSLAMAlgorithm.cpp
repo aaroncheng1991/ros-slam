@@ -61,7 +61,7 @@ Eigen::MatrixXd FastSLAMAlgorithm::measurementPrediction(Eigen::Vector2d mean, E
         }
     }
     //TODO
-     //calculate h(mean, x)=h(mean, sampledPose)
+    //calculate h(mean, x)=h(mean, sampledPose)
     //IN the paper they call it g instead of h, who the fuck knows what they mean
 
     return z;
@@ -69,7 +69,7 @@ Eigen::MatrixXd FastSLAMAlgorithm::measurementPrediction(Eigen::Vector2d mean, E
 Eigen::MatrixXd FastSLAMAlgorithm::jacobian(Eigen::Vector3d x,Eigen::Vector2d mean){
     Eigen::MatrixXd g;
     //TODO
-     //calc jacobians lol, but why of 2 vectors? does that even mean something?
+    //calc jacobians lol, but why of 2 vectors? does that even mean something?
 
     return g;
 }
@@ -223,22 +223,41 @@ void FastSLAMAlgorithm::motionModel(const nav_msgs::Odometry msg){
 }
 
 void FastSLAMAlgorithm::resample(){
+
+    //Normalizing weights
+    double sum = 0;
+    for (unsigned int i = 0; i < PARTICLECOUNT; ++i) {
+        sum+=particles[i].weight;
+    }
+    for (unsigned int var = 0; var < PARTICLECOUNT; ++var) {
+        particles[var].weight = particles[var].weight / sum;
+    }
     //Sorting weights from Big to small.
     std::sort(particles.begin(),particles.end());
     //We remove an amount of particles at the end. In this case 15 - the 10 we keep.
-    unsigned int toResample = PARTICLECOUNT-KEEP_PARTICLES;
-    for (unsigned int i = 0; i < toResample; ++i) {
-        particles.pop_back();
+
+    std::vector<Particle> keep;
+    std::vector<Particle*> randomParticles;
+    for (int i = 0; i < particles.size(); ++i) {
+        for (int j = 0; j < int (particles[i].weight*100); ++j) {
+            randomParticles.push_back(&particles[i]);
+        }
     }
+    std::random_shuffle(randomParticles.begin(), randomParticles.end());
+    for (int var = 0; var < KEEP_PARTICLES; ++var) {
+        keep.push_back(*randomParticles[var]);
+    }
+    std::sort(keep.begin(),keep.end());
 
     //We now add the same amount back to the list.
     //For now based on the best particle might decide to add some gaussian noise to these particles.
     //Maybe change initial weight and make it copy random particles based on weight?
+    unsigned int toResample = PARTICLECOUNT - KEEP_PARTICLES;
     for (unsigned int i = 0; i < toResample; ++i) {
         fslam::Particle p;
-        p.robotPos = particles[0].robotPos;
+        p.robotPos = keep[0].robotPos;
         p.weight=1.0/PARTICLECOUNT;
-        particles.push_back(p);
+        keep.push_back(p);
     }
 
 }
