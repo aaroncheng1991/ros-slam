@@ -12,8 +12,8 @@ namespace fslam {
 
     struct Feature {
         //Here we place the mean and standard deviation
-        Eigen::Vector2d mean;
-        Eigen::Vector2d covariance;
+        Eigen::Vector3d mean;
+        Eigen::Vector3d covariance;
         //Iterations used for likelyhood of existance.
         int iterated;
         //Not sure if we need weight or if it's just calculated through i.
