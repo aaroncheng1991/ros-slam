@@ -67,11 +67,17 @@ Eigen::MatrixXd FastSLAMAlgorithm::measurementPrediction(Eigen::Vector2d mean, E
     return z;
 }
 Eigen::MatrixXd FastSLAMAlgorithm::jacobian(Eigen::Vector3d x,Eigen::Vector2d mean){
-    Eigen::MatrixXd g;
-    //TODO
-    //calc jacobians lol, but why of 2 vectors? does that even mean something?
-
-    return g;
+    Eigen::VectorXd s = mean - x;
+    double de = sqrt(s.norm());
+    double phi = atan2(s[1], s[0]);
+    Eigen::Matrix3d v;
+    v[0][0] = de * cos(phi);
+    v[0][1] = -de * sin(phi);
+    v[0][2] = v[1][2] = v[2][0] = v[2][1] = 0;
+    v[1][0] = de * sin(phi);
+    v[1][1] = de * cos(phi);
+    v[2][2] = 1;
+    return v;
 }
 Eigen::MatrixXd FastSLAMAlgorithm::measurementCovariance(Eigen::MatrixXd g, Eigen::Vector2d cov){
     //Calculate measurement covariance (G transposed x covariance x G + Rt)
@@ -90,29 +96,6 @@ Eigen::Vector2d FastSLAMAlgorithm::initMean(const sensor_msgs::LaserScan::ConstP
     //g^-1(zt, xt)
     Eigen::Vector2d mean;
     return mean;
-}
-
-std::vector<Particle> FastSLAMAlgorithm::fastSLAM(Eigen::Matrix2d zt, Eigen::Vector3d motion, std::vector<Particle> Y){
-    //    for(unsigned int k = 0; k < Y.size(); ++k) {
-    //        _pose xOld = Y[k].robotPos;
-    //        std::vector<Feature> features = Y[k].features;
-    //        _pose xNew = sampleNewPose(xOld, m);
-    //        for(unsigned int j = 0 ; j < features.size(); ++j) {
-    //            Feature feature = features[j];
-    //            Eigen::Matrix2d z = measurementPrediction(feature.mean, xNew);
-    //            Eigen::Matrix2d H = jacobian(feature.mean, xNew);
-    //            // measurement covariance
-    //            Eigen::Matrix2d Qt;
-    //            Eigen::Matrix2d Q = H * feature.covariance * H.transpose() + Qt; // TODO: WHERE does Qt come from???
-    //            // strange calculation: wj = sqrt(2*pi*Q) * ??exp(-0.5*(zt-zj).transpose()*Q*(zt-z))
-
-    //        }
-    //    }
-    // TODO implement code from line 11 page 461
-
-    std::vector<Particle> ret;
-
-    return ret;
 }
 
 void FastSLAMAlgorithm::sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan){
