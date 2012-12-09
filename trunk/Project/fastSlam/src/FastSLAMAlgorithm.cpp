@@ -43,8 +43,18 @@ FastSLAMAlgorithm::FastSLAMAlgorithm(ros::NodeHandle& nh) : visualization(visual
 
 // Method Declarations
 
-Eigen::MatrixXd FastSLAMAlgorithm::measurementPrediction(Eigen::Vector2d mean, Eigen::Vector3d x, const sensor_msgs::LaserScan::ConstPtr& scan, Feature &feature) {
-    Eigen::VectorXd z;
+Eigen::Vector3d FastSLAMAlgorithm::measurementPrediction(Eigen::Vector3d mean, Eigen::Vector3d x) {
+    //s is the difference between mean of the landmark and the robot pose.
+    Eigen::Vector3d s = mean - x;
+    Eigen::Vector3d z;
+    //Formula as seen in the german paper p 43
+    z[0] = s[0]*cos(-1*s[2]) - (s[1]*sin(-1*s[2]));
+    z[1] = s[0]*sin(-1*s[2]) - (s[1]*cos(-1*s[2]));
+    z[2] = s[2];
+
+
+
+    /*
     double dy = mean[1]-x[1];
     double dx = mean[0]-x[0];
     double alpha = atan2(abs(dy), abs(dx));
@@ -59,7 +69,7 @@ Eigen::MatrixXd FastSLAMAlgorithm::measurementPrediction(Eigen::Vector2d mean, E
         } else {
             z[i-(scan->angle_min)] = 0;
         }
-    }
+    }*/
     //TODO
     //calculate h(mean, x)=h(mean, sampledPose)
     //IN the paper they call it g instead of h, who the fuck knows what they mean
@@ -92,9 +102,14 @@ double FastSLAMAlgorithm::featureWeight(Eigen::MatrixXd q, Eigen::VectorXd z, Ei
     double weight = pow((2*M_PI*q).determinant(), 0.5)*exp(powerexp);
     return weight;
 }
-Eigen::Vector2d FastSLAMAlgorithm::initMean(const sensor_msgs::LaserScan::ConstPtr& scan, Eigen::Vector3d x) {
+Eigen::Vector2d FastSLAMAlgorithm::initMean(Eigen::Vector3d zt, Eigen::Vector3d x) {
     //g^-1(zt, xt)
-    Eigen::Vector2d mean;
+    Eigen::Vector3d mean;
+
+    mean[0] = zt[0]*cos(x[2]) - zt[1]*sin(x[2]) + x[0];
+    mean[1] = zt[0]*sin(x[2]) + zt[1]*cos(x[2]) + x[1];
+    mean[2] = zt[2];
+
     return mean;
 }
 
@@ -109,7 +124,7 @@ void FastSLAMAlgorithm::sensorModel(const sensor_msgs::LaserScan::ConstPtr& scan
         //For all features in this particle
         for (unsigned int j = 0; j < particles[i].features.size(); ++j) {
             //Measurement prediction step h(mean, pose) (p319?) check p14 of the paper
-            Eigen::VectorXd z = measurementPrediction(particles[i].features[j].mean, particles[i].robotPos, scan, particles[i].features[j]);
+            Eigen::Vector3d z = measurementPrediction(particles[i].features[j].mean, particles[i].robotPos);
             particles[i].features[j].measurementPrediction = z;
             //Calculate jacobian with pose and mean
             Eigen::MatrixXd gMatrix = jacobian(particles[i].robotPos,particles[i].features[j].mean);
